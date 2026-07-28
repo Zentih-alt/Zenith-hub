@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายละเอียดสินค้า — Zenith Shop</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--paper:#F7F8FB;--paper-2:#FFFFFF;--ink:#14152B;--ink-soft:#3A3B55;--slate:#6B7280;--line:#E4E6F0;--indigo:#3730A9;--indigo-soft:#EDECFB;--green:#1F9D6C;--red:#C23434;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;}
+  a{color:inherit;text-decoration:none;}
+  .wrap{max-width:720px;margin:0 auto;padding:20px 18px 60px;}
+  .back{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;color:var(--ink-soft);margin-bottom:16px;}
+  .thumb{aspect-ratio:16/9;border-radius:16px;background:linear-gradient(135deg,var(--indigo-soft),var(--paper));display:flex;align-items:center;justify-content:center;margin-bottom:18px;position:relative;}
+  .tag{position:absolute;top:12px;left:12px;font-size:11.5px;font-weight:600;background:var(--paper-2);border:1px solid var(--line);padding:5px 10px;border-radius:999px;}
+  h1{font-family:'Space Grotesk',sans-serif;font-size:21px;margin-bottom:6px;}
+  .price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:14px;}
+  .price{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:26px;color:var(--indigo);}
+  .stock{font-size:12.5px;color:var(--slate);margin-bottom:18px;}
+  .desc{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:18px;font-size:14px;line-height:1.7;margin-bottom:18px;white-space:pre-wrap;}
+  .qty-row{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+  .qty-btn{width:38px;height:38px;border-radius:9px;border:1px solid var(--line);background:var(--paper-2);font-size:17px;cursor:pointer;}
+  .qty-val{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:15px;min-width:24px;text-align:center;}
+  .total-row{display:flex;justify-content:space-between;align-items:center;background:var(--indigo-soft);border-radius:12px;padding:14px 16px;margin-bottom:18px;}
+  .total-row .lbl{font-size:13px;color:var(--ink-soft);}
+  .total-row .val{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:19px;color:var(--indigo);}
+  .buy-btn{width:100%;background:var(--indigo);color:#fff;border:none;padding:14px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;}
+  .buy-btn:disabled{opacity:.5;cursor:not-allowed;}
+  .msg{font-size:13px;text-align:center;margin-top:10px;padding:10px;border-radius:9px;display:none;}
+  .msg.error{background:#FDECEC;color:var(--red);display:block;}
+  .msg.success{background:#E3F6EC;color:var(--green);display:block;}
+  .loading{text-align:center;color:var(--slate);padding:60px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="store.html" class="back">← กลับร้านค้า</a>
+  <div id="content" class="loading">กำลังโหลดสินค้า...</div>
+</div>
+
+<script src="config.js"></script>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const productId = params.get('id');
+  let qty = 1;
+  let productData = null;
+
+  async function loadProduct(){
+    if(!productId){
+      document.getElementById('content').innerHTML = '<p style="text-align:center;color:var(--slate);">ไม่พบสินค้า</p>';
+      return;
+    }
+    const { data, error } = await supabaseClient.from('products').select('*, categories(name, icon)').eq('id', productId).single();
+    if(error || !data){
+      document.getElementById('content').innerHTML = '<p style="text-align:center;color:var(--slate);">ไม่พบสินค้านี้ อาจถูกลบหรือขายหมดแล้ว</p>';
+      return;
+    }
+    productData = data;
+    render();
+  }
+
+  function render(){
+    const p = productData;
+    document.getElementById('content').innerHTML = `
+      <div class="thumb">
+        <span class="tag">${p.categories?.icon || ''} ${p.categories?.name || ''}</span>
+        <span style="font-size:44px;opacity:.5;">${p.categories?.icon || '🎮'}</span>
+      </div>
+      <h1>${p.title}</h1>
+      <div class="price-row"><span class="price">฿${p.price}</span></div>
+      <div class="stock">เหลือ ${p.stock} ชิ้น</div>
+      <div class="desc">${p.description || 'ไม่มีรายละเอียดเพิ่มเติมสำหรับสินค้านี้'}</div>
+      <div class="qty-row">
+        <span style="font-size:13px;color:var(--ink-soft);">จำนวน</span>
+        <button class="qty-btn" onclick="changeQty(-1)">−</button>
+        <span class="qty-val" id="qtyVal">1</span>
+        <button class="qty-btn" onclick="changeQty(1)">+</button>
+      </div>
+      <div class="total-row">
+        <span class="lbl">ยอดรวม</span>
+        <span class="val" id="totalVal">฿${p.price}</span>
+      </div>
+      <button class="buy-btn" id="buyBtn" onclick="buyNow()" ${p.stock<1 ? 'disabled':''}>${p.stock<1 ? 'สินค้าหมด' : 'ซื้อเลย'}</button>
+      <div class="msg" id="buyMsg"></div>
+    `;
+  }
+
+  function changeQty(delta){
+    const next = qty + delta;
+    if(next < 1 || next > productData.stock) return;
+    qty = next;
+    document.getElementById('qtyVal').textContent = qty;
+    document.getElementById('totalVal').textContent = '฿' + (productData.price * qty).toLocaleString();
+  }
+
+  async function buyNow(){
+    const msg = document.getElementById('buyMsg');
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if(!user){
+      window.location.href = 'auth.html';
+      return;
+    }
+    const { data: profile } = await supabaseClient.from('profiles').select('wallet_balance').eq('id', user.id).single();
+    const total = productData.price * qty;
+    if(!profile || profile.wallet_balance < total){
+      msg.className = 'msg error';
+      msg.textContent = 'ยอดเงินในกระเป๋าไม่พอ กรุณาเติมเงินก่อนสั่งซื้อ';
+      return;
+    }
+    if(productData.stock < qty){
+      msg.className = 'msg error';
+      msg.textContent = 'สินค้าคงเหลือไม่พอ';
+      return;
+    }
+    const btn = document.getElementById('buyBtn');
+    btn.disabled = true; btn.textContent = 'กำลังสั่งซื้อ...';
+
+    const newBalance = profile.wallet_balance - total;
+    await supabaseClient.from('profiles').update({ wallet_balance: newBalance }).eq('id', user.id);
+    await supabaseClient.from('products').update({ stock: productData.stock - qty }).eq('id', productData.id);
+    await supabaseClient.from('orders').insert({
+      user_id: user.id, product_id: productData.id, product_title: productData.title,
+      price: total, status: 'completed'
+    });
+
+    msg.className = 'msg success';
+    msg.textContent = 'สั่งซื้อสำเร็จ! ขอบคุณที่ใช้บริการ Zenith Shop';
+    btn.textContent = 'สั่งซื้อสำเร็จ';
+  }
+
+  loadProduct();
+</script>
+</body>
+</html>

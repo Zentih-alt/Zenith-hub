@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เข้าสู่ระบบ / สมัครสมาชิก — Zenith Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--paper:#F7F8FB;--paper-2:#FFFFFF;--ink:#14152B;--ink-soft:#3A3B55;--slate:#6B7280;--line:#E4E6F0;--indigo:#3730A9;--indigo-soft:#EDECFB;--green:#1F9D6C;--red:#C23434;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .box{max-width:380px;width:100%;background:var(--paper-2);border:1px solid var(--line);border-radius:18px;padding:30px 26px;}
+  .logo-row{display:flex;align-items:center;gap:9px;justify-content:center;margin-bottom:22px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;}
+  .logo-row img{width:28px;height:28px;object-fit:contain;}
+  h2{font-family:'Space Grotesk',sans-serif;font-size:19px;text-align:center;margin-bottom:6px;}
+  .sub{text-align:center;color:var(--slate);font-size:12.5px;margin-bottom:22px;}
+  label{font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:5px;}
+  input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font-size:14px;margin-bottom:14px;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;}
+  input:focus{outline:none;border-color:var(--indigo);}
+  .btn{background:var(--indigo);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:600;font-size:14.5px;width:100%;cursor:pointer;font-family:'Inter',sans-serif;}
+  .btn:hover{opacity:.92;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .switch-row{text-align:center;margin-top:16px;font-size:13px;color:var(--slate);}
+  .switch-row a{color:var(--indigo);font-weight:600;cursor:pointer;}
+  .msg{font-size:12.5px;text-align:center;margin-top:10px;display:none;padding:9px;border-radius:8px;}
+  .msg.error{background:#FDECEC;color:var(--red);display:block;}
+  .msg.success{background:#E3F6EC;color:var(--green);display:block;}
+  .captcha-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .captcha-row span{font-family:'JetBrains Mono',monospace;font-weight:700;background:var(--indigo-soft);color:var(--indigo);padding:10px 14px;border-radius:9px;font-size:15px;white-space:nowrap;}
+  .captcha-row input{margin-bottom:0;}
+  /* honeypot field — invisible to real users, bots often fill it in */
+  .hp{position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0;}
+  a.back{display:block;text-align:center;margin-bottom:16px;font-size:12.5px;color:var(--slate);}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <a href="index.html" class="back">← กลับหน้าแรก</a>
+  <div class="logo-row"><img src="zenith-logo.png" alt="Zenith Shop"> Zenith Shop</div>
+
+  <div id="loginView">
+    <h2>เข้าสู่ระบบ</h2>
+    <div class="sub">เข้าสู่ระบบเพื่อดำเนินการต่อ</div>
+    <label>อีเมล</label>
+    <input type="email" id="liEmail" placeholder="you@email.com">
+    <label>รหัสผ่าน</label>
+    <input type="password" id="liPass" placeholder="รหัสผ่าน">
+    <button class="btn" onclick="doLogin()">เข้าสู่ระบบ</button>
+    <div class="switch-row">ยังไม่มีบัญชี? <a onclick="showSignup()">สมัครสมาชิก</a></div>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+
+  <div id="signupView" style="display:none;">
+    <h2>สมัครสมาชิก</h2>
+    <div class="sub">สร้างบัญชีเพื่อเริ่มซื้อของกับ Zenith Shop</div>
+    <label>ชื่อผู้ใช้</label>
+    <input type="text" id="suUsername" placeholder="เช่น zenith_player">
+    <label>อีเมล</label>
+    <input type="email" id="suEmail" placeholder="you@email.com">
+    <label>รหัสผ่าน</label>
+    <input type="password" id="suPass" placeholder="อย่างน้อย 6 ตัวอักษร">
+
+    <!-- honeypot: real users never see/fill this; bots usually do -->
+    <input type="text" name="website" id="hpField" class="hp" tabindex="-1" autocomplete="off">
+
+    <label id="captchaLabel"></label>
+    <div class="captcha-row">
+      <span id="captchaQ"></span>
+      <input type="number" id="captchaA" placeholder="คำตอบ">
+    </div>
+
+    <button class="btn" id="signupBtn" onclick="doSignup()">สมัครสมาชิก</button>
+    <div class="switch-row">มีบัญชีอยู่แล้ว? <a onclick="showLogin()">เข้าสู่ระบบ</a></div>
+    <div class="msg" id="signupMsg"></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+  function showSignup(){
+    document.getElementById('loginView').style.display='none';
+    document.getElementById('signupView').style.display='block';
+    newCaptcha();
+  }
+  function showLogin(){
+    document.getElementById('signupView').style.display='none';
+    document.getElementById('loginView').style.display='block';
+  }
+
+  // --- Bot protection #1: simple math captcha, regenerated each attempt ---
+  let captchaAnswer = 0;
+  function newCaptcha(){
+    const a = Math.floor(Math.random()*8)+1;
+    const b = Math.floor(Math.random()*8)+1;
+    captchaAnswer = a + b;
+    document.getElementById('captchaLabel').textContent = 'ยืนยันว่าไม่ใช่บอท: ผลรวมของตัวเลขนี้คือเท่าใด';
+    document.getElementById('captchaQ').textContent = `${a} + ${b} =`;
+    document.getElementById('captchaA').value = '';
+  }
+
+  function showMsg(id, text, type){
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'msg ' + type;
+  }
+
+  function translateAuthError(message){
+    const m = (message || '').toLowerCase();
+    if(m.includes('invalid login credentials')) return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+    if(m.includes('email not confirmed')) return 'กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ';
+    if(m.includes('user already registered') || m.includes('already registered')) return 'อีเมลนี้ถูกใช้สมัครสมาชิกแล้ว';
+    if(m.includes('password should be at least')) return 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+    if(m.includes('rate limit') || m.includes('too many requests')) return 'มีการร้องขอมากเกินไป กรุณาลองใหม่อีกครั้งในภายหลัง';
+    if(m.includes('network')) return 'เชื่อมต่อเครือข่ายไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่';
+    return 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
+  }
+
+  async function doLogin(){
+    const email = document.getElementById('liEmail').value.trim();
+    const password = document.getElementById('liPass').value;
+    if(!email || !password){ showMsg('loginMsg','กรอกอีเมลและรหัสผ่านให้ครบ','error'); return; }
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if(error){ showMsg('loginMsg', translateAuthError(error.message), 'error'); return; }
+    showMsg('loginMsg', 'เข้าสู่ระบบสำเร็จ กำลังพาไปหน้าแรก...', 'success');
+    const nextUrl = new URLSearchParams(window.location.search).get('next') || 'index.html';
+    setTimeout(()=> window.location.href = nextUrl, 800);
+  }
+
+  async function doSignup(){
+    const btn = document.getElementById('signupBtn');
+    const username = document.getElementById('suUsername').value.trim();
+    const email = document.getElementById('suEmail').value.trim();
+    const password = document.getElementById('suPass').value;
+    const hp = document.getElementById('hpField').value;          // honeypot
+    const captchaInput = document.getElementById('captchaA').value;
+
+    // --- Bot protection #2: honeypot — if this hidden field has a value, it's a bot ---
+    if(hp){
+      showMsg('signupMsg', 'สมัครไม่สำเร็จ กรุณาลองใหม่', 'error');
+      newCaptcha();
+      return;
+    }
+    // --- Bot protection #1 check ---
+    if(parseInt(captchaInput) !== captchaAnswer){
+      showMsg('signupMsg', 'คำตอบไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง', 'error');
+      newCaptcha();
+      return;
+    }
+    if(!username || !email || !password){
+      showMsg('signupMsg', 'กรอกข้อมูลให้ครบทุกช่อง', 'error');
+      return;
+    }
+    if(password.length < 6){
+      showMsg('signupMsg', 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', 'error');
+      return;
+    }
+
+    btn.disabled = true; btn.textContent = 'กำลังสมัคร...';
+    const { data, error } = await supabaseClient.auth.signUp({
+      email, password,
+      options: { data: { username } }
+    });
+    btn.disabled = false; btn.textContent = 'สมัครสมาชิก';
+
+    if(error){
+      showMsg('signupMsg', translateAuthError(error.message), 'error');
+      newCaptcha();
+      return;
+    }
+    showMsg('signupMsg', 'สมัครสำเร็จ! กำลังพาไปหน้าเข้าสู่ระบบ...', 'success');
+    setTimeout(()=> showLogin(), 1200);
+  }
+
+  newCaptcha();
+</script>
+</body>
+</html>

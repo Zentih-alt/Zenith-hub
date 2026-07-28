@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เติมเงิน — Zenith Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --paper:#F7F8FB;--paper-2:#FFFFFF;--ink:#14152B;--ink-soft:#3A3B55;--slate:#6B7280;
+    --line:#E4E6F0;--indigo:#3730A9;--indigo-soft:#EDECFB;--gold:#D4A954;--green:#1F9D6C;
+  }
+  [data-theme="dark"]{
+    --paper:#14152B;--paper-2:#1B1C36;--ink:#F5F5FA;--ink-soft:#C7C8DA;--slate:#9294AC;
+    --line:#2C2D4A;--indigo:#7C74F0;--indigo-soft:#25254A;--gold:#E3BD73;--green:#3FC48C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;transition:background .3s ease,color .3s ease;}
+  a{color:inherit;text-decoration:none;}
+  header{position:sticky;top:0;z-index:50;background:color-mix(in srgb, var(--paper) 88%, transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  nav{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;max-width:1120px;margin:0 auto;}
+  .logo{display:flex;align-items:center;gap:9px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:19px;}
+  .navlinks{display:flex;gap:28px;font-size:14px;font-weight:500;color:var(--ink-soft);}
+  .navlinks a:hover{color:var(--indigo);}
+  .navright{display:flex;align-items:center;gap:12px;}
+  .theme-toggle{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--paper-2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);}
+  .theme-toggle:hover{border-color:var(--indigo);color:var(--indigo);}
+  .btn{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;padding:11px 20px;border-radius:10px;border:none;cursor:pointer;}
+  .btn-primary{background:var(--indigo);color:#fff;}
+  .btn-primary:hover{opacity:.9;}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink);}
+  .menu-btn{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--paper-2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);position:relative;}
+  .menu-btn:hover{border-color:var(--indigo);color:var(--indigo);}
+  .menu-panel{position:absolute;top:60px;right:20px;width:240px;background:var(--paper-2);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.15);padding:10px;display:none;z-index:100;}
+  .menu-panel.open{display:block;}
+  .menu-panel a{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink-soft);}
+  .menu-panel a:hover{background:var(--indigo-soft);color:var(--indigo);}
+  .menu-divider{height:1px;background:var(--line);margin:6px 4px;}
+  @media(max-width:760px){.navlinks{display:none;}}
+
+  .wrap{max-width:640px;margin:0 auto;padding:80px 20px 60px;text-align:center;}
+  .icon-circle{width:72px;height:72px;border-radius:50%;background:var(--indigo-soft);color:var(--indigo);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;}
+  h1{font-family:'Space Grotesk',sans-serif;font-size:24px;margin-bottom:10px;}
+  p.sub{color:var(--slate);font-size:14.5px;line-height:1.7;margin-bottom:28px;}
+  .balance-card{background:var(--paper-2);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:24px;}
+  .balance-card .lbl{font-size:12.5px;color:var(--slate);margin-bottom:6px;}
+  .balance-card .val{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:var(--indigo);}
+</style>
+</head>
+<body data-theme="light">
+
+<header>
+  <nav>
+    <a href="index.html" class="logo">
+      <img src="zenith-logo.png" alt="Zenith Shop" style="width:30px;height:30px;object-fit:contain;">
+      Zenith Shop
+    </a>
+    <div class="navlinks">
+      <a href="index.html">หน้าหลัก</a>
+      <a href="store.html">สินค้า</a>
+      <a href="topup.html">เติมเงิน</a>
+      <a href="contact.html">ติดต่อ</a>
+    </div>
+    <div class="navright">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="สลับธีมสว่าง/มืด">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8"/></svg>
+      </button>
+      <a href="auth.html" class="btn btn-ghost" id="navLoginBtn">เข้าสู่ระบบ</a>
+      <a href="auth.html" class="btn btn-primary" id="navSignupBtn">สมัครสมาชิก</a>
+      <div style="position:relative;">
+        <button class="menu-btn" onclick="toggleMenu()" aria-label="เมนู" id="menuBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <div class="menu-panel" id="menuPanel">
+          <a href="index.html">หน้าหลัก</a>
+          <a href="store.html">สินค้า</a>
+          <a href="topup.html">เติมเงิน</a>
+          <div class="menu-divider"></div>
+          <a href="history.html">ประวัติ</a>
+          <a href="credits.html">เครดิตคงเหลือ</a>
+          <a href="profile.html">โปรไฟล์</a>
+          <a href="#" onclick="doLogout(); return false;">ออกจากระบบ</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<div class="wrap">
+  <div class="icon-circle">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+  </div>
+  <h1>ระบบเติมเงินกำลังจะเปิดให้บริการ</h1>
+  <p class="sub">เรากำลังพัฒนาระบบเติมเงินให้ปลอดภัยและสะดวกยิ่งขึ้น กรุณาติดตามการเปิดใช้งานเร็วๆ นี้ หากต้องการความช่วยเหลือระหว่างนี้ สามารถติดต่อทีมงานได้ผ่านหน้าติดต่อร้าน</p>
+  <a href="contact.html" class="btn btn-primary" style="display:inline-block;">ติดต่อทีมงาน</a>
+</div>
+
+<script src="config.js"></script>
+<script>
+  function toggleTheme(){
+    const body = document.body;
+    const next = body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    body.setAttribute('data-theme', next);
+    localStorage.setItem('zenith-theme', next);
+  }
+  (function(){
+    const saved = localStorage.getItem('zenith-theme');
+    if(saved) document.body.setAttribute('data-theme', saved);
+  })();
+  function toggleMenu(){ document.getElementById('menuPanel').classList.toggle('open'); }
+  document.addEventListener('click', (e)=>{
+    const panel = document.getElementById('menuPanel');
+    const btn = document.getElementById('menuBtn');
+    if(!panel||!btn) return;
+    if(panel.classList.contains('open') && !panel.contains(e.target) && !btn.contains(e.target)){
+      panel.classList.remove('open');
+    }
+  });
+
+  async function updateNavAuthState(){
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if(session){
+      const loginBtn = document.getElementById('navLoginBtn');
+      const signupBtn = document.getElementById('navSignupBtn');
+      if(loginBtn) loginBtn.remove();
+      if(signupBtn){
+        signupBtn.textContent = 'บัญชีของฉัน';
+        signupBtn.href = 'profile.html';
+      }
+    }
+  }
+  updateNavAuthState();
+
+  async function doLogout(){
+    await supabaseClient.auth.signOut();
+    window.location.href = 'index.html';
+  }
+</script>
+
+</body>
+</html>
