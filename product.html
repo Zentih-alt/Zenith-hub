@@ -97,11 +97,12 @@
 
   async function buyNow(){
     const msg = document.getElementById('buyMsg');
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if(!user){
-      window.location.href = 'auth.html';
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if(!session){
+      window.location.href = 'auth.html?next=' + encodeURIComponent(window.location.pathname + window.location.search);
       return;
     }
+    const user = session.user;
     const { data: profile } = await supabaseClient.from('profiles').select('wallet_balance').eq('id', user.id).single();
     const total = productData.price * qty;
     if(!profile || profile.wallet_balance < total){

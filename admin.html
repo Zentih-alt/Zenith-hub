@@ -194,7 +194,7 @@
     const price = parseFloat(document.getElementById('pPrice').value);
     const stock = parseInt(document.getElementById('pStock').value || '0');
     const description = document.getElementById('pDesc').value.trim();
-    if(!title || !price) return;
+    if(!title || price === '' || isNaN(price) || price < 0) return;
     await supabaseClient.from('products').insert({ title, category_id, price, stock, description });
     ['pTitle','pPrice','pStock','pDesc'].forEach(id=>document.getElementById(id).value='');
     loadProducts();
