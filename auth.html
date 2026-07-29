@@ -8,86 +8,191 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root{--paper:#F7F8FB;--paper-2:#FFFFFF;--ink:#14152B;--ink-soft:#3A3B55;--slate:#6B7280;--line:#E4E6F0;--indigo:#3730A9;--indigo-soft:#EDECFB;--green:#1F9D6C;--red:#C23434;}
+  :root{--paper:#F7F8FB;--paper-2:#FFFFFF;--ink:#14152B;--ink-soft:#3A3B55;--slate:#6B7280;--line:#E4E6F0;--indigo:#3730A9;--indigo-2:#4F46D6;--indigo-soft:#EDECFB;--gold:#D4A954;--green:#1F9D6C;--red:#C23434;}
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
-  .box{max-width:380px;width:100%;background:var(--paper-2);border:1px solid var(--line);border-radius:18px;padding:30px 26px;}
-  .logo-row{display:flex;align-items:center;gap:9px;justify-content:center;margin-bottom:22px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;}
-  .logo-row img{width:28px;height:28px;object-fit:contain;}
-  h2{font-family:'Space Grotesk',sans-serif;font-size:19px;text-align:center;margin-bottom:6px;}
-  .sub{text-align:center;color:var(--slate);font-size:12.5px;margin-bottom:22px;}
+  body{
+    background:var(--paper);
+    color:var(--ink);font-family:'Inter',sans-serif;min-height:100vh;
+  }
+  a{color:inherit;}
+  .shell{min-height:100vh;display:flex;}
+
+  /* LEFT BRAND PANEL — desktop only */
+  .brand-panel{
+    display:none;
+    flex:1;position:relative;overflow:hidden;
+    background:
+      radial-gradient(900px 600px at 20% 10%, rgba(124,116,240,.35), transparent 60%),
+      radial-gradient(700px 500px at 90% 85%, rgba(212,169,84,.25), transparent 55%),
+      linear-gradient(160deg, #14152B 0%, #1B1C3E 55%, #201F45 100%);
+    color:#F5F5FA;
+    flex-direction:column;justify-content:space-between;
+    padding:48px;
+  }
+  .brand-panel .top{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:19px;}
+  .brand-panel .top img{width:32px;height:32px;object-fit:contain;border-radius:8px;}
+  .brand-panel .mid{max-width:380px;}
+  .brand-panel .eyebrow{
+    display:inline-block;font-size:12px;font-weight:600;letter-spacing:.03em;
+    color:var(--gold);background:rgba(212,169,84,.14);border:1px solid rgba(212,169,84,.3);
+    padding:5px 12px;border-radius:999px;margin-bottom:18px;
+  }
+  .brand-panel h1{font-family:'Space Grotesk',sans-serif;font-size:32px;line-height:1.25;font-weight:700;margin-bottom:14px;}
+  .brand-panel p{font-size:14.5px;line-height:1.7;color:#C7C8DA;}
+  .brand-stats{display:flex;gap:28px;margin-top:36px;}
+  .brand-stats div b{display:block;font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;}
+  .brand-stats div span{font-size:12px;color:#9294AC;}
+  .brand-panel .foot{font-size:12px;color:#7A7C99;}
+
+  /* RIGHT FORM PANEL */
+  .form-panel{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .box{max-width:400px;width:100%;padding:8px 4px;}
+  .mobile-logo{display:flex;align-items:center;gap:9px;justify-content:center;margin-bottom:26px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18.5px;}
+  .mobile-logo img{width:30px;height:30px;object-fit:contain;border-radius:7px;}
+  h2{font-family:'Space Grotesk',sans-serif;font-size:22px;text-align:center;margin-bottom:6px;letter-spacing:-.01em;}
+  .sub{text-align:center;color:var(--slate);font-size:13px;margin-bottom:26px;line-height:1.6;}
   label{font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:5px;}
-  input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font-size:14px;margin-bottom:14px;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;}
-  input:focus{outline:none;border-color:var(--indigo);}
-  .btn{background:var(--indigo);color:#fff;border:none;padding:12px;border-radius:10px;font-weight:600;font-size:14.5px;width:100%;cursor:pointer;font-family:'Inter',sans-serif;}
-  .btn:hover{opacity:.92;}
+  input{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:14px;margin-bottom:14px;background:var(--paper-2);color:var(--ink);font-family:'Inter',sans-serif;transition:border-color .15s ease, box-shadow .15s ease;}
+  input:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px var(--indigo-soft);}
+  .btn{
+    background:linear-gradient(135deg, var(--indigo) 0%, var(--indigo-2) 100%);
+    color:#fff;border:none;padding:13px;border-radius:11px;font-weight:600;font-size:14.5px;width:100%;cursor:pointer;
+    font-family:'Inter',sans-serif;transition:transform .12s ease, opacity .12s ease;
+    box-shadow:0 8px 20px rgba(55,48,169,.25);
+  }
+  .btn:hover{opacity:.94;}
+  .btn:active{transform:scale(.98);}
   .btn:disabled{opacity:.5;cursor:not-allowed;}
-  .switch-row{text-align:center;margin-top:16px;font-size:13px;color:var(--slate);}
+  .btn-text{background:none;border:none;color:var(--indigo);font-size:12.5px;font-weight:600;cursor:pointer;padding:0;font-family:'Inter',sans-serif;}
+  .field-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+  .field-row label{margin-bottom:0;}
+  .switch-row{text-align:center;margin-top:20px;font-size:13px;color:var(--slate);}
   .switch-row a{color:var(--indigo);font-weight:600;cursor:pointer;}
-  .msg{font-size:12.5px;text-align:center;margin-top:10px;display:none;padding:9px;border-radius:8px;}
+  .msg{font-size:12.5px;text-align:center;margin-top:12px;display:none;padding:10px;border-radius:9px;line-height:1.5;}
   .msg.error{background:#FDECEC;color:var(--red);display:block;}
   .msg.success{background:#E3F6EC;color:var(--green);display:block;}
   .captcha-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-  .captcha-row span{font-family:'JetBrains Mono',monospace;font-weight:700;background:var(--indigo-soft);color:var(--indigo);padding:10px 14px;border-radius:9px;font-size:15px;white-space:nowrap;}
+  .captcha-row span{font-family:'JetBrains Mono',monospace;font-weight:700;background:var(--indigo-soft);color:var(--indigo);padding:11px 14px;border-radius:9px;font-size:15px;white-space:nowrap;}
   .captcha-row input{margin-bottom:0;}
   /* honeypot field — invisible to real users, bots often fill it in */
   .hp{position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0;}
-  a.back{display:block;text-align:center;margin-bottom:16px;font-size:12.5px;color:var(--slate);}
+  a.back{display:flex;align-items:center;gap:5px;margin-bottom:18px;font-size:12.5px;color:var(--slate);text-decoration:none;}
+  a.back:hover{color:var(--ink-soft);}
+
+  @media(min-width:920px){
+    .brand-panel{display:flex;}
+    .mobile-logo{display:none;}
+  }
 </style>
 </head>
 <body>
 
-<div class="box">
-  <a href="index.html" class="back">← กลับหน้าแรก</a>
-  <div class="logo-row"><img src="zenith-logo.png" alt="Zenith Shop"> Zenith Shop</div>
-
-  <div id="loginView">
-    <h2>เข้าสู่ระบบ</h2>
-    <div class="sub">เข้าสู่ระบบเพื่อดำเนินการต่อ</div>
-    <label>อีเมล</label>
-    <input type="email" id="liEmail" placeholder="you@email.com">
-    <label>รหัสผ่าน</label>
-    <input type="password" id="liPass" placeholder="รหัสผ่าน">
-    <button class="btn" onclick="doLogin()">เข้าสู่ระบบ</button>
-    <div class="switch-row">ยังไม่มีบัญชี? <a onclick="showSignup()">สมัครสมาชิก</a></div>
-    <div class="msg" id="loginMsg"></div>
+<div class="shell">
+  <div class="brand-panel">
+    <div class="top"><img src="zenith-logo.png" alt="Zenith Shop"> Zenith Shop</div>
+    <div class="mid">
+      <span class="eyebrow">แพลตฟอร์มไอดี &amp; ไอเทมเกม</span>
+      <h1>ซื้อขายไอดีและไอเทมเกม อย่างมั่นใจ ปลอดภัยทุกรายการ</h1>
+      <p>ระบบส่งของอัตโนมัติ ตรวจสอบสถานะการสั่งซื้อได้ตลอดเวลา พร้อมทีมงานดูแลลูกค้าทุกวัน</p>
+      <div class="brand-stats">
+        <div><b>24 ชม.</b><span>ระบบส่งของอัตโนมัติ</span></div>
+        <div><b>100%</b><span>ยืนยันตัวตนผู้ขาย</span></div>
+      </div>
+    </div>
+    <div class="foot">© 2026 Zenith Shop</div>
   </div>
 
-  <div id="signupView" style="display:none;">
-    <h2>สมัครสมาชิก</h2>
-    <div class="sub">สร้างบัญชีเพื่อเริ่มซื้อของกับ Zenith Shop</div>
-    <label>ชื่อผู้ใช้</label>
-    <input type="text" id="suUsername" placeholder="เช่น zenith_player">
-    <label>อีเมล</label>
-    <input type="email" id="suEmail" placeholder="you@email.com">
-    <label>รหัสผ่าน</label>
-    <input type="password" id="suPass" placeholder="อย่างน้อย 6 ตัวอักษร">
+  <div class="form-panel">
+    <div class="box">
+      <a href="index.html" class="back">← กลับหน้าแรก</a>
+      <div class="mobile-logo"><img src="zenith-logo.png" alt="Zenith Shop"> Zenith Shop</div>
 
-    <!-- honeypot: real users never see/fill this; bots usually do -->
-    <input type="text" name="website" id="hpField" class="hp" tabindex="-1" autocomplete="off">
+      <div id="loginView">
+        <h2>เข้าสู่ระบบ</h2>
+        <div class="sub">เข้าสู่ระบบเพื่อดำเนินการต่อ</div>
+        <label>อีเมล</label>
+        <input type="email" id="liEmail" placeholder="you@email.com">
+        <div class="field-row">
+          <label>รหัสผ่าน</label>
+          <button class="btn-text" onclick="showForgot()">ลืมรหัสผ่าน?</button>
+        </div>
+        <input type="password" id="liPass" placeholder="รหัสผ่าน">
+        <button class="btn" onclick="doLogin()">เข้าสู่ระบบ</button>
+        <div class="switch-row">ยังไม่มีบัญชี? <a onclick="showSignup()">สมัครสมาชิก</a></div>
+        <div class="msg" id="loginMsg"></div>
+      </div>
 
-    <label id="captchaLabel"></label>
-    <div class="captcha-row">
-      <span id="captchaQ"></span>
-      <input type="number" id="captchaA" placeholder="คำตอบ">
+      <div id="signupView" style="display:none;">
+        <h2>สมัครสมาชิก</h2>
+        <div class="sub">สร้างบัญชีเพื่อเริ่มซื้อของกับ Zenith Shop</div>
+        <label>ชื่อผู้ใช้</label>
+        <input type="text" id="suUsername" placeholder="เช่น zenith_player">
+        <label>อีเมล</label>
+        <input type="email" id="suEmail" placeholder="you@email.com">
+        <label>รหัสผ่าน</label>
+        <input type="password" id="suPass" placeholder="อย่างน้อย 6 ตัวอักษร">
+
+        <!-- honeypot: real users never see/fill this; bots usually do -->
+        <input type="text" name="website" id="hpField" class="hp" tabindex="-1" autocomplete="off">
+
+        <label id="captchaLabel"></label>
+        <div class="captcha-row">
+          <span id="captchaQ"></span>
+          <input type="number" id="captchaA" placeholder="คำตอบ">
+        </div>
+
+        <button class="btn" id="signupBtn" onclick="doSignup()">สมัครสมาชิก</button>
+        <div class="switch-row">มีบัญชีอยู่แล้ว? <a onclick="showLogin()">เข้าสู่ระบบ</a></div>
+        <div class="msg" id="signupMsg"></div>
+      </div>
+
+      <div id="forgotView" style="display:none;">
+        <h2>ลืมรหัสผ่าน</h2>
+        <div class="sub">กรอกอีเมลที่ใช้สมัคร ระบบจะส่งลิงก์ตั้งรหัสผ่านใหม่ให้</div>
+        <label>อีเมล</label>
+        <input type="email" id="fgEmail" placeholder="you@email.com">
+        <button class="btn" id="forgotBtn" onclick="doForgot()">ส่งลิงก์ตั้งรหัสผ่านใหม่</button>
+        <div class="switch-row"><a onclick="showLogin()">← กลับไปเข้าสู่ระบบ</a></div>
+        <div class="msg" id="forgotMsg"></div>
+      </div>
+
+      <div id="resetView" style="display:none;">
+        <h2>ตั้งรหัสผ่านใหม่</h2>
+        <div class="sub">กรอกรหัสผ่านใหม่สำหรับบัญชีของคุณ</div>
+        <label>รหัสผ่านใหม่</label>
+        <input type="password" id="rsPass" placeholder="อย่างน้อย 6 ตัวอักษร">
+        <label>ยืนยันรหัสผ่านใหม่</label>
+        <input type="password" id="rsPass2" placeholder="พิมพ์ซ้ำอีกครั้ง">
+        <button class="btn" id="resetBtn" onclick="doReset()">บันทึกรหัสผ่านใหม่</button>
+        <div class="msg" id="resetMsg"></div>
+      </div>
     </div>
-
-    <button class="btn" id="signupBtn" onclick="doSignup()">สมัครสมาชิก</button>
-    <div class="switch-row">มีบัญชีอยู่แล้ว? <a onclick="showLogin()">เข้าสู่ระบบ</a></div>
-    <div class="msg" id="signupMsg"></div>
   </div>
 </div>
 
 <script src="config.js"></script>
 <script>
+  function hideAllViews(){
+    ['loginView','signupView','forgotView','resetView'].forEach(id=>{
+      document.getElementById(id).style.display='none';
+    });
+  }
   function showSignup(){
-    document.getElementById('loginView').style.display='none';
+    hideAllViews();
     document.getElementById('signupView').style.display='block';
     newCaptcha();
   }
   function showLogin(){
-    document.getElementById('signupView').style.display='none';
+    hideAllViews();
     document.getElementById('loginView').style.display='block';
+  }
+  function showForgot(){
+    hideAllViews();
+    document.getElementById('forgotView').style.display='block';
+  }
+  function showReset(){
+    hideAllViews();
+    document.getElementById('resetView').style.display='block';
   }
 
   // --- Bot protection #1: simple math captcha, regenerated each attempt ---
@@ -113,8 +218,9 @@
     if(m.includes('email not confirmed')) return 'กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ';
     if(m.includes('user already registered') || m.includes('already registered')) return 'อีเมลนี้ถูกใช้สมัครสมาชิกแล้ว';
     if(m.includes('password should be at least')) return 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
-    if(m.includes('rate limit') || m.includes('too many requests')) return 'มีการร้องขอมากเกินไป กรุณาลองใหม่อีกครั้งในภายหลัง';
+    if(m.includes('rate limit') || m.includes('too many requests') || m.includes('seconds') || m.includes('security purposes')) return 'มีการร้องขอมากเกินไป กรุณาลองใหม่อีกครั้งในอีกสักครู่';
     if(m.includes('network')) return 'เชื่อมต่อเครือข่ายไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่';
+    if(m.includes('same_password') || m.includes('should be different')) return 'กรุณาตั้งรหัสผ่านใหม่ที่ไม่ซ้ำกับรหัสเดิม';
     return 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
   }
 
@@ -173,6 +279,42 @@
     showMsg('signupMsg', 'สมัครสำเร็จ! กำลังพาไปหน้าเข้าสู่ระบบ...', 'success');
     setTimeout(()=> showLogin(), 1200);
   }
+
+  async function doForgot(){
+    const btn = document.getElementById('forgotBtn');
+    const email = document.getElementById('fgEmail').value.trim();
+    if(!email){ showMsg('forgotMsg', 'กรอกอีเมลก่อนครับ', 'error'); return; }
+    btn.disabled = true; btn.textContent = 'กำลังส่ง...';
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/auth.html'
+    });
+    btn.disabled = false; btn.textContent = 'ส่งลิงก์ตั้งรหัสผ่านใหม่';
+    if(error){ showMsg('forgotMsg', translateAuthError(error.message), 'error'); return; }
+    showMsg('forgotMsg', 'ส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลแล้ว กรุณาตรวจสอบกล่องจดหมาย (รวมถึงโฟลเดอร์สแปม)', 'success');
+  }
+
+  async function doReset(){
+    const btn = document.getElementById('resetBtn');
+    const p1 = document.getElementById('rsPass').value;
+    const p2 = document.getElementById('rsPass2').value;
+    if(!p1 || !p2){ showMsg('resetMsg', 'กรอกรหัสผ่านให้ครบทั้งสองช่อง', 'error'); return; }
+    if(p1.length < 6){ showMsg('resetMsg', 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', 'error'); return; }
+    if(p1 !== p2){ showMsg('resetMsg', 'รหัสผ่านทั้งสองช่องไม่ตรงกัน', 'error'); return; }
+    btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+    const { error } = await supabaseClient.auth.updateUser({ password: p1 });
+    btn.disabled = false; btn.textContent = 'บันทึกรหัสผ่านใหม่';
+    if(error){ showMsg('resetMsg', translateAuthError(error.message), 'error'); return; }
+    showMsg('resetMsg', 'ตั้งรหัสผ่านใหม่สำเร็จ กำลังพาไปหน้าแรก...', 'success');
+    setTimeout(()=> window.location.href = 'index.html', 1000);
+  }
+
+  // Supabase redirects here with a recovery token in the URL after the user
+  // clicks the "reset password" email link — detect that and show the reset form.
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if(event === 'PASSWORD_RECOVERY'){
+      showReset();
+    }
+  });
 
   newCaptcha();
 </script>
