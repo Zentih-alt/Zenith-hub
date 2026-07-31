@@ -16,9 +16,9 @@
     --ink-soft:#48484A;
     --slate:#7A7A7D;
     --line:#E4E4E2;
-    --indigo:#B8862F;
-    --indigo-soft:#F3E9D4;
-    --gold:#96701F;
+    --indigo:#2563EB;
+    --indigo-soft:#DBEAFE;
+    --gold:#1D4ED8;
     --green:#1F9D6C;
     --radius:16px;
   }
@@ -29,9 +29,9 @@
     --ink-soft:#C8C8C6;
     --slate:#93938F;
     --line:#2E2E30;
-    --indigo:#E3BD73;
-    --indigo-soft:#332A18;
-    --gold:#D4A954;
+    --indigo:#60A5FA;
+    --indigo-soft:#1E3A5F;
+    --gold:#3B82F6;
     --green:#3FC48C;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -58,7 +58,7 @@
   .theme-toggle:hover{border-color:var(--indigo);color:var(--indigo);}
   .btn{font-family:'Inter',sans-serif;font-weight:700;font-size:13.5px;padding:10px 16px;border-radius:9px;border:none;cursor:pointer;transition:transform .15s ease, opacity .15s ease;white-space:nowrap;}
   .btn:active{transform:scale(.97);}
-  .btn-primary{background:var(--indigo);color:#1A1405;}
+  .btn-primary{background:var(--indigo);color:#FFFFFF;}
   .btn-primary:hover{background:var(--gold);}
   .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink);}
   .btn-ghost:hover{border-color:var(--indigo);color:var(--gold);}
@@ -74,7 +74,7 @@
   .menu-close{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);margin-bottom:14px;}
   .menu-profile{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--indigo);border-radius:14px;margin-bottom:8px;background:var(--indigo-soft);}
   .menu-avatar{width:42px;height:42px;border-radius:50%;background:var(--ink);color:var(--indigo);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;}
-  [data-theme="dark"] .menu-avatar{background:var(--indigo);color:#1A1405;}
+  [data-theme="dark"] .menu-avatar{background:var(--indigo);color:#FFFFFF;}
   .menu-profile-info{overflow:hidden;flex:1;}
   .menu-profile-info .name{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .menu-profile-info .wallet-row{display:flex;align-items:center;gap:5px;margin-top:3px;}
@@ -211,7 +211,7 @@
   }
   .cat-banner-img::after{
     content:"";position:absolute;right:-30px;top:-30px;width:180px;height:180px;
-    background:radial-gradient(circle, rgba(212,169,84,.3), transparent 70%);
+    background:radial-gradient(circle, rgba(37,99,235,.3), transparent 70%);
   }
   .cat-banner-img .cat-emoji{font-size:38px;margin-right:16px;position:relative;z-index:2;}
   .cat-banner-img h4{font-family:'Space Grotesk',sans-serif;font-size:clamp(16px,3vw,22px);position:relative;z-index:2;}
@@ -310,7 +310,7 @@
   [data-theme="dark"] .wallet-banner{background:linear-gradient(120deg,#4A42D6,#211E5C);}
   .wallet-banner::after{
     content:"";position:absolute;right:-40px;top:-40px;width:220px;height:220px;
-    background:radial-gradient(circle, rgba(212,169,84,.35), transparent 70%);
+    background:radial-gradient(circle, rgba(37,99,235,.35), transparent 70%);
   }
   .wallet-text h3{font-family:'Space Grotesk',sans-serif;font-size:22px;margin-bottom:8px;}
   .wallet-text p{font-size:14px;opacity:.85;max-width:420px;line-height:1.6;}
@@ -342,6 +342,29 @@
   .logout-btn-sm{background:#FDECEC;color:#C23434;border:none;padding:9px 16px;border-radius:9px;font-weight:600;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;}
   .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px;}
   @media(min-width:520px){.stat-grid{grid-template-columns:repeat(3,1fr);}}
+
+  .edit-list a, .edit-list button.edit-row-btn{width:100%;text-align:left;display:flex;align-items:center;gap:11px;padding:13px 10px;border-radius:10px;font-size:14px;font-weight:500;color:var(--ink);background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;}
+  .edit-list button.edit-row-btn:hover{background:var(--indigo-soft);color:var(--gold);}
+  .edit-list button.edit-row-btn svg{flex-shrink:0;color:var(--ink-soft);}
+  .edit-list button.edit-row-btn:hover svg{color:var(--gold);}
+  .edit-list .divider{height:1px;background:var(--line);margin:6px 0;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:120;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal-box{background:var(--paper-2);border-radius:18px;padding:24px;max-width:400px;width:100%;max-height:86vh;overflow-y:auto;}
+  .modal-box h3{font-family:'Space Grotesk',sans-serif;font-size:17px;margin-bottom:16px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;color:var(--slate);margin-bottom:6px;font-weight:600;}
+  .field input, .field select{width:100%;padding:11px 13px;border-radius:9px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:14px;font-family:'Inter',sans-serif;}
+  .field input:focus, .field select:focus{outline:none;border-color:var(--indigo);}
+  .avatar-pick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .avatar-pick button{width:42px;height:42px;border-radius:50%;border:2px solid var(--line);background:var(--paper);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .avatar-pick button.picked{border-color:var(--indigo);}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;}
+  .modal-actions .btn{flex:1;}
+  .modal-msg{font-size:13px;text-align:center;margin-top:10px;padding:10px;border-radius:9px;display:none;}
+  .modal-msg.error{background:#FDECEC;color:#C23434;display:block;}
+  .modal-msg.success{background:#E3F6EC;color:#1F9D6C;display:block;}
   .stat-card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:16px;}
   .stat-card .lbl{font-size:12px;color:var(--slate);margin-bottom:4px;}
   .stat-card .val{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;}
@@ -453,12 +476,92 @@
       <div class="stat-card"><div class="lbl">คำสั่งซื้อทั้งหมด</div><div class="val" id="pOrderCount">-</div></div>
       <div class="stat-card"><div class="lbl">ยอดเงินคงเหลือ</div><div class="val" id="pWalletMini">-</div></div>
       <div class="stat-card"><div class="lbl">สมาชิกตั้งแต่</div><div class="val" id="pCreated" style="font-size:14px;">-</div></div>
+      <div class="stat-card"><div class="lbl">ยอดเติมเงินสะสม</div><div class="val" id="pTotalTopup" style="font-size:14px;">-</div></div>
     </div>
 
     <div class="profile-card" id="walletCard" style="text-align:center;">
       <div style="font-size:13px; color:var(--slate); margin-bottom:6px;">ยอดเงินคงเหลือ</div>
       <div class="wallet-amount" id="pWallet">฿0</div>
       <button class="btn btn-primary" style="margin-top:14px; width:100%;" onclick="window.location.href='topup.html'">เติมเงิน</button>
+    </div>
+
+    <div class="profile-card" style="padding:10px;">
+      <h3 style="font-family:'Space Grotesk',sans-serif;font-size:15px;padding:8px 10px 4px;">แก้ไขข้อมูลบัญชี</h3>
+      <div class="edit-list">
+        <button class="edit-row-btn" onclick="openModal('avatarModal')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.4" stroke="currentColor" stroke-width="1.6"/><path d="M5 20c1.4-3.6 4.2-5.5 7-5.5s5.6 1.9 7 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          เปลี่ยนรูปโปรไฟล์
+        </button>
+        <div class="divider"></div>
+        <button class="edit-row-btn" onclick="openModal('nameModal')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          เปลี่ยนชื่อบัญชี
+        </button>
+        <div class="divider"></div>
+        <button class="edit-row-btn" onclick="openModal('emailModal')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          เปลี่ยนอีเมล
+        </button>
+        <div class="divider"></div>
+        <button class="edit-row-btn" onclick="openModal('passwordModal')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="4" y="11" width="16" height="9" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.6"/></svg>
+          เปลี่ยนรหัสผ่าน
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Avatar Modal -->
+<div class="modal-overlay" id="avatarModal">
+  <div class="modal-box">
+    <h3>เปลี่ยนรูปโปรไฟล์</h3>
+    <div class="avatar-pick" id="avatarPick"></div>
+    <div class="modal-msg" id="avatarMsg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('avatarModal')">ยกเลิก</button>
+      <button class="btn btn-primary" id="avatarSaveBtn" onclick="saveAvatar()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Name Modal -->
+<div class="modal-overlay" id="nameModal">
+  <div class="modal-box">
+    <h3>เปลี่ยนชื่อบัญชี</h3>
+    <div class="field"><label>ชื่อบัญชีใหม่</label><input type="text" id="newUsername" maxlength="24" placeholder="ชื่อบัญชี"></div>
+    <div class="modal-msg" id="nameMsg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('nameModal')">ยกเลิก</button>
+      <button class="btn btn-primary" id="nameSaveBtn" onclick="saveUsername()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Email Modal -->
+<div class="modal-overlay" id="emailModal">
+  <div class="modal-box">
+    <h3>เปลี่ยนอีเมล</h3>
+    <div class="field"><label>อีเมลใหม่</label><input type="email" id="newEmail" placeholder="you@example.com"></div>
+    <div class="modal-msg" id="emailMsg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('emailModal')">ยกเลิก</button>
+      <button class="btn btn-primary" id="emailSaveBtn" onclick="saveEmail()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Password Modal -->
+<div class="modal-overlay" id="passwordModal">
+  <div class="modal-box">
+    <h3>เปลี่ยนรหัสผ่าน</h3>
+    <div class="field"><label>รหัสผ่านปัจจุบัน</label><input type="password" id="curPassword" placeholder="รหัสผ่านปัจจุบัน"></div>
+    <div class="field"><label>รหัสผ่านใหม่</label><input type="password" id="newPassword" placeholder="รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)"></div>
+    <div class="field"><label>ยืนยันรหัสผ่านใหม่</label><input type="password" id="confirmPassword" placeholder="พิมพ์รหัสผ่านใหม่อีกครั้ง"></div>
+    <div class="modal-msg" id="passwordMsg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('passwordModal')">ยกเลิก</button>
+      <button class="btn btn-primary" id="passwordSaveBtn" onclick="savePassword()">บันทึก</button>
     </div>
   </div>
 </div>
@@ -485,12 +588,18 @@
   }
 
 
+  let currentUser = null;
+  let currentProfile = null;
+  const AVATAR_EMOJIS = ['😀','😎','🦊','🐱','🐼','🚀','⭐','🔥','🎮','🛒','💎','🌙'];
+
   async function loadProfile(){
     const { data: { session } } = await supabaseClient.auth.getSession();
     if(!session){ window.location.href = 'auth.html?next=profile.html'; return; }
     const user = session.user;
+    currentUser = user;
 
     const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+    currentProfile = profile;
     const { count: orderCount } = await supabaseClient
       .from('orders')
       .select('*', { count: 'exact', head: true })
@@ -498,14 +607,16 @@
 
     const username = profile?.username || user.email.split('@')[0];
     const walletText = '฿' + Number(profile?.wallet_balance || 0).toLocaleString();
+    const avatarChar = profile?.avatar_emoji || username.charAt(0).toUpperCase();
 
-    document.getElementById('pAvatar').textContent = username.charAt(0).toUpperCase();
+    document.getElementById('pAvatar').textContent = avatarChar;
     document.getElementById('pUsername').textContent = username;
     document.getElementById('pEmail').textContent = user.email;
     document.getElementById('pCreated').textContent = profile?.created_at ? new Date(profile.created_at).toLocaleDateString('th-TH') : '-';
     document.getElementById('pWallet').textContent = walletText;
     document.getElementById('pWalletMini').textContent = walletText;
     document.getElementById('pOrderCount').textContent = (orderCount ?? 0) + ' รายการ';
+    document.getElementById('pTotalTopup').textContent = profile?.total_topup != null ? '฿' + Number(profile.total_topup).toLocaleString() : '-';
 
     const badge = document.getElementById('pVerifyBadge');
     if(user.email_confirmed_at){
@@ -516,8 +627,84 @@
       badge.className = 'badge badge-unverified';
     }
 
+    document.getElementById('newUsername').value = username;
+    document.getElementById('newEmail').value = user.email;
+
     document.getElementById('loadingCard').style.display = 'none';
     document.getElementById('profileLoaded').style.display = 'block';
+  }
+
+  function openModal(id){
+    document.getElementById(id).classList.add('open');
+    if(id === 'avatarModal') renderAvatarPicker();
+  }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+  function renderAvatarPicker(){
+    const pick = document.getElementById('avatarPick');
+    const current = currentProfile?.avatar_emoji || '';
+    pick.innerHTML = AVATAR_EMOJIS.map(e => `<button type="button" class="${e===current?'picked':''}" onclick="selectAvatar('${e}')">${e}</button>`).join('');
+  }
+  let selectedAvatar = null;
+  function selectAvatar(e){
+    selectedAvatar = e;
+    renderAvatarPicker();
+    document.querySelectorAll('#avatarPick button').forEach(b => b.classList.toggle('picked', b.textContent === e));
+  }
+  async function saveAvatar(){
+    const msg = document.getElementById('avatarMsg');
+    if(!selectedAvatar){ msg.className='modal-msg error'; msg.textContent='กรุณาเลือกรูปโปรไฟล์'; return; }
+    const btn = document.getElementById('avatarSaveBtn'); btn.disabled = true; btn.textContent='กำลังบันทึก...';
+    const { error } = await supabaseClient.from('profiles').update({ avatar_emoji: selectedAvatar }).eq('id', currentUser.id);
+    btn.disabled = false; btn.textContent = 'บันทึก';
+    if(error){ msg.className='modal-msg error'; msg.textContent='บันทึกไม่สำเร็จ ระบบอาจยังไม่รองรับการเปลี่ยนรูปโปรไฟล์'; return; }
+    msg.className='modal-msg success'; msg.textContent='บันทึกรูปโปรไฟล์เรียบร้อย';
+    setTimeout(() => { closeModal('avatarModal'); loadProfile(); }, 800);
+  }
+
+  async function saveUsername(){
+    const msg = document.getElementById('nameMsg');
+    const val = document.getElementById('newUsername').value.trim();
+    if(!val){ msg.className='modal-msg error'; msg.textContent='กรุณากรอกชื่อบัญชี'; return; }
+    const btn = document.getElementById('nameSaveBtn'); btn.disabled = true; btn.textContent='กำลังบันทึก...';
+    const { error } = await supabaseClient.from('profiles').update({ username: val }).eq('id', currentUser.id);
+    btn.disabled = false; btn.textContent = 'บันทึก';
+    if(error){ msg.className='modal-msg error'; msg.textContent='บันทึกไม่สำเร็จ ลองอีกครั้ง'; return; }
+    msg.className='modal-msg success'; msg.textContent='เปลี่ยนชื่อบัญชีเรียบร้อย';
+    setTimeout(() => { closeModal('nameModal'); loadProfile(); updateNavAuthState(); }, 800);
+  }
+
+  async function saveEmail(){
+    const msg = document.getElementById('emailMsg');
+    const val = document.getElementById('newEmail').value.trim();
+    if(!val || !val.includes('@')){ msg.className='modal-msg error'; msg.textContent='กรุณากรอกอีเมลให้ถูกต้อง'; return; }
+    const btn = document.getElementById('emailSaveBtn'); btn.disabled = true; btn.textContent='กำลังบันทึก...';
+    const { error } = await supabaseClient.auth.updateUser({ email: val });
+    btn.disabled = false; btn.textContent = 'บันทึก';
+    if(error){ msg.className='modal-msg error'; msg.textContent=error.message || 'บันทึกไม่สำเร็จ'; return; }
+    msg.className='modal-msg success'; msg.textContent='ระบบส่งลิงก์ยืนยันไปยังอีเมลใหม่ กรุณายืนยันก่อนอีเมลจะเปลี่ยน';
+  }
+
+  async function savePassword(){
+    const msg = document.getElementById('passwordMsg');
+    const cur = document.getElementById('curPassword').value;
+    const next = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    if(!cur || !next || !confirm){ msg.className='modal-msg error'; msg.textContent='กรุณากรอกข้อมูลให้ครบทุกช่อง'; return; }
+    if(next.length < 6){ msg.className='modal-msg error'; msg.textContent='รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร'; return; }
+    if(next !== confirm){ msg.className='modal-msg error'; msg.textContent='รหัสผ่านใหม่และการยืนยันไม่ตรงกัน'; return; }
+    const btn = document.getElementById('passwordSaveBtn'); btn.disabled = true; btn.textContent='กำลังตรวจสอบ...';
+    const { error: signInErr } = await supabaseClient.auth.signInWithPassword({ email: currentUser.email, password: cur });
+    if(signInErr){ btn.disabled=false; btn.textContent='บันทึก'; msg.className='modal-msg error'; msg.textContent='รหัสผ่านปัจจุบันไม่ถูกต้อง'; return; }
+    btn.textContent = 'กำลังบันทึก...';
+    const { error } = await supabaseClient.auth.updateUser({ password: next });
+    btn.disabled = false; btn.textContent = 'บันทึก';
+    if(error){ msg.className='modal-msg error'; msg.textContent=error.message || 'บันทึกไม่สำเร็จ'; return; }
+    msg.className='modal-msg success'; msg.textContent='เปลี่ยนรหัสผ่านเรียบร้อยแล้ว';
+    document.getElementById('curPassword').value='';
+    document.getElementById('newPassword').value='';
+    document.getElementById('confirmPassword').value='';
+    setTimeout(() => closeModal('passwordModal'), 1000);
   }
 
   async function doLogout(){
@@ -531,6 +718,10 @@
     const menuAccountList = document.getElementById('menuAccountList');
     const menuTopupLinkArea = document.getElementById('menuTopupLinkArea');
     if(session){
+      const loginBtn = document.getElementById('navLoginBtn');
+      const signupBtn = document.getElementById('navSignupBtn');
+      if(loginBtn) loginBtn.remove();
+      if(signupBtn){ signupBtn.textContent = 'บัญชีของฉัน'; signupBtn.href = 'profile.html'; }
       const { data: profile } = await supabaseClient.from('profiles').select('username, wallet_balance').eq('id', session.user.id).single();
       const name = profile?.username || session.user.email || 'สมาชิก';
       const initial = name.charAt(0).toUpperCase();

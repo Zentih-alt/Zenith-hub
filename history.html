@@ -16,9 +16,9 @@
     --ink-soft:#48484A;
     --slate:#7A7A7D;
     --line:#E4E4E2;
-    --indigo:#B8862F;
-    --indigo-soft:#F3E9D4;
-    --gold:#96701F;
+    --indigo:#2563EB;
+    --indigo-soft:#DBEAFE;
+    --gold:#1D4ED8;
     --green:#1F9D6C;
     --radius:16px;
   }
@@ -29,9 +29,9 @@
     --ink-soft:#C8C8C6;
     --slate:#93938F;
     --line:#2E2E30;
-    --indigo:#E3BD73;
-    --indigo-soft:#332A18;
-    --gold:#D4A954;
+    --indigo:#60A5FA;
+    --indigo-soft:#1E3A5F;
+    --gold:#3B82F6;
     --green:#3FC48C;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -58,7 +58,7 @@
   .theme-toggle:hover{border-color:var(--indigo);color:var(--indigo);}
   .btn{font-family:'Inter',sans-serif;font-weight:700;font-size:13.5px;padding:10px 16px;border-radius:9px;border:none;cursor:pointer;transition:transform .15s ease, opacity .15s ease;white-space:nowrap;}
   .btn:active{transform:scale(.97);}
-  .btn-primary{background:var(--indigo);color:#1A1405;}
+  .btn-primary{background:var(--indigo);color:#FFFFFF;}
   .btn-primary:hover{background:var(--gold);}
   .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink);}
   .btn-ghost:hover{border-color:var(--indigo);color:var(--gold);}
@@ -74,7 +74,7 @@
   .menu-close{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink-soft);margin-bottom:14px;}
   .menu-profile{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--indigo);border-radius:14px;margin-bottom:8px;background:var(--indigo-soft);}
   .menu-avatar{width:42px;height:42px;border-radius:50%;background:var(--ink);color:var(--indigo);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;}
-  [data-theme="dark"] .menu-avatar{background:var(--indigo);color:#1A1405;}
+  [data-theme="dark"] .menu-avatar{background:var(--indigo);color:#FFFFFF;}
   .menu-profile-info{overflow:hidden;flex:1;}
   .menu-profile-info .name{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .menu-profile-info .wallet-row{display:flex;align-items:center;gap:5px;margin-top:3px;}
@@ -211,7 +211,7 @@
   }
   .cat-banner-img::after{
     content:"";position:absolute;right:-30px;top:-30px;width:180px;height:180px;
-    background:radial-gradient(circle, rgba(212,169,84,.3), transparent 70%);
+    background:radial-gradient(circle, rgba(37,99,235,.3), transparent 70%);
   }
   .cat-banner-img .cat-emoji{font-size:38px;margin-right:16px;position:relative;z-index:2;}
   .cat-banner-img h4{font-family:'Space Grotesk',sans-serif;font-size:clamp(16px,3vw,22px);position:relative;z-index:2;}
@@ -310,7 +310,7 @@
   [data-theme="dark"] .wallet-banner{background:linear-gradient(120deg,#4A42D6,#211E5C);}
   .wallet-banner::after{
     content:"";position:absolute;right:-40px;top:-40px;width:220px;height:220px;
-    background:radial-gradient(circle, rgba(212,169,84,.35), transparent 70%);
+    background:radial-gradient(circle, rgba(37,99,235,.35), transparent 70%);
   }
   .wallet-text h3{font-family:'Space Grotesk',sans-serif;font-size:22px;margin-bottom:8px;}
   .wallet-text p{font-size:14px;opacity:.85;max-width:420px;line-height:1.6;}
@@ -321,12 +321,25 @@
   .foot-row p{font-size:12.5px;color:var(--slate);}
   .foot-links{display:flex;gap:18px;font-size:12.5px;color:var(--slate);}
 
-  .hist-box{max-width:640px;margin:32px auto;padding:0 20px;}
-  .hist-item{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
-  .hist-title{font-weight:600;font-size:14px;margin-bottom:3px;}
+  .hist-box{max-width:680px;margin:32px auto;padding:0 20px;}
+  .hist-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+  .hist-summary .card{background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:14px 10px;text-align:center;}
+  .hist-summary .card .num{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;color:var(--indigo);}
+  .hist-summary .card .lbl{font-size:11px;color:var(--slate);margin-top:3px;}
+  .hist-search{width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:var(--paper-2);color:var(--ink);font-size:13.5px;margin-bottom:14px;font-family:'Inter',sans-serif;}
+  .hist-search:focus{outline:none;border-color:var(--indigo);}
+  .hist-item{background:var(--paper-2);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:10px;display:flex;gap:14px;align-items:center;}
+  .hist-icon{width:44px;height:44px;border-radius:12px;background:var(--indigo-soft);color:var(--indigo);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+  .hist-info{flex:1;min-width:0;}
+  .hist-title{font-weight:600;font-size:14px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .hist-date{font-size:12px;color:var(--slate);}
-  .hist-price{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--indigo);}
-  .hist-status{font-size:11px;padding:3px 9px;border-radius:999px;background:#E3F6EC;color:#1F9D6C;font-weight:600;margin-left:8px;}
+  .hist-right{text-align:right;flex-shrink:0;}
+  .hist-price{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--indigo);font-size:14.5px;margin-bottom:5px;}
+  .hist-status{font-size:11px;padding:3px 9px;border-radius:999px;background:#E3F6EC;color:#1F9D6C;font-weight:600;white-space:nowrap;}
+  .hist-status.pending{background:#FBF3E3;color:#B8871F;}
+  .hist-status.cancelled{background:#FDECEC;color:#C23434;}
+  .hist-empty{text-align:center;padding:50px 20px;color:var(--slate);}
+  .hist-empty .icon{font-size:40px;margin-bottom:10px;}
 
 </style>
 </head>
@@ -409,7 +422,17 @@
 </div>
 
 <div class="hist-box">
-  <h2 style="font-family:'Space Grotesk',sans-serif;font-size:22px;margin-bottom:18px;">ประวัติการซื้อ</h2>
+  <h2 style="font-family:'Space Grotesk',sans-serif;font-size:22px;margin-bottom:4px;">ประวัติการซื้อ</h2>
+  <p style="color:var(--slate);font-size:13px;margin-bottom:18px;">ติดตามรายการสั่งซื้อและประวัติทั้งหมดของคุณ</p>
+
+  <div class="hist-summary">
+    <div class="card"><div class="num" id="histCountAll">-</div><div class="lbl">รายการทั้งหมด</div></div>
+    <div class="card"><div class="num" id="histCountDone">-</div><div class="lbl">สำเร็จ</div></div>
+    <div class="card"><div class="num" id="histSpend">-</div><div class="lbl">ยอดใช้จ่ายรวม</div></div>
+  </div>
+
+  <input type="text" class="hist-search" id="histSearch" placeholder="ค้นหาสินค้าที่เคยสั่งซื้อ..." oninput="renderHistory()">
+
   <div id="histList">
     <p style="color:var(--slate);font-size:13.5px;">กำลังโหลด...</p>
   </div>
@@ -438,6 +461,7 @@
 
 
   const statusMap = { completed: 'สำเร็จ', pending: 'กำลังดำเนินการ', cancelled: 'ยกเลิก' };
+  let allOrders = [];
 
   async function loadHistory(){
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -450,18 +474,40 @@
       .eq('user_id', user.id)
       .order('created_at', { ascending:false });
 
+    allOrders = orders || [];
+
+    const completed = allOrders.filter(o => o.status === 'completed');
+    document.getElementById('histCountAll').textContent = allOrders.length;
+    document.getElementById('histCountDone').textContent = completed.length;
+    document.getElementById('histSpend').textContent = '฿' + completed.reduce((sum,o) => sum + Number(o.price||0), 0).toLocaleString();
+
+    renderHistory();
+  }
+
+  function renderHistory(){
+    const q = document.getElementById('histSearch').value.trim().toLowerCase();
     const list = document.getElementById('histList');
-    if(!orders || orders.length === 0){
-      list.innerHTML = `<p style="color:var(--slate);font-size:13.5px;">ยังไม่มีประวัติการซื้อ</p>`;
+    const filtered = q ? allOrders.filter(o => (o.product_title||'').toLowerCase().includes(q)) : allOrders;
+
+    if(!allOrders.length){
+      list.innerHTML = `<div class="hist-empty"><div class="icon">🛍️</div><p>ยังไม่มีประวัติการซื้อ</p></div>`;
       return;
     }
-    list.innerHTML = orders.map(o => `
+    if(!filtered.length){
+      list.innerHTML = `<div class="hist-empty"><div class="icon">🔍</div><p>ไม่พบรายการที่ค้นหา</p></div>`;
+      return;
+    }
+    list.innerHTML = filtered.map(o => `
       <div class="hist-item">
-        <div>
+        <div class="hist-icon">🛒</div>
+        <div class="hist-info">
           <div class="hist-title">${o.product_title}</div>
-          <div class="hist-date">${new Date(o.created_at).toLocaleString('th-TH')}<span class="hist-status">${statusMap[o.status]||o.status}</span></div>
+          <div class="hist-date">${new Date(o.created_at).toLocaleString('th-TH')}</div>
         </div>
-        <div class="hist-price">฿${Number(o.price).toLocaleString()}</div>
+        <div class="hist-right">
+          <div class="hist-price">฿${Number(o.price).toLocaleString()}</div>
+          <span class="hist-status ${o.status}">${statusMap[o.status]||o.status}</span>
+        </div>
       </div>
     `).join('');
   }
@@ -479,6 +525,10 @@
     const menuAccountList = document.getElementById('menuAccountList');
     const menuTopupLinkArea = document.getElementById('menuTopupLinkArea');
     if(session){
+      const loginBtn = document.getElementById('navLoginBtn');
+      const signupBtn = document.getElementById('navSignupBtn');
+      if(loginBtn) loginBtn.remove();
+      if(signupBtn){ signupBtn.textContent = 'บัญชีของฉัน'; signupBtn.href = 'profile.html'; }
       const { data: profile } = await supabaseClient.from('profiles').select('username, wallet_balance').eq('id', session.user.id).single();
       const name = profile?.username || session.user.email || 'สมาชิก';
       const initial = name.charAt(0).toUpperCase();
