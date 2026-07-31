@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <style>
 
   :root{
@@ -232,11 +233,7 @@
 
       <input type="text" name="website" id="hpField" class="hp" tabindex="-1" autocomplete="off">
 
-      <label id="captchaLabel"></label>
-      <div class="captcha-row">
-        <span id="captchaQ"></span>
-        <input type="number" id="captchaA" placeholder="คำตอบ">
-      </div>
+      <div id="turnstileWidget" style="margin-bottom:14px;"></div>
 
       <button class="btn btn-primary btn-full" id="signupBtn" onclick="doSignup()">สมัครสมาชิก</button>
       <div class="switch-row">มีบัญชีอยู่แล้ว? <a onclick="showLogin()">เข้าสู่ระบบ</a></div>
@@ -298,7 +295,7 @@ function showSignup(){
   document.getElementById('signupView').style.display = 'block';
   document.getElementById('forgotView').style.display = 'none';
   document.getElementById('resetView').style.display = 'none';
-  newCaptcha();
+  renderTurnstile();
 }
 function showForgot(){
   document.getElementById('loginView').style.display = 'none';
@@ -307,16 +304,20 @@ function showForgot(){
   document.getElementById('resetView').style.display = 'none';
 }
 
-let captchaAnswer = 0;
-function newCaptcha(){
-  const a = Math.floor(Math.random()*8)+1;
-  const b = Math.floor(Math.random()*8)+1;
-  captchaAnswer = a+b;
-  document.getElementById('captchaQ').textContent = `${a} + ${b} =`;
-  document.getElementById('captchaA').value = '';
-  document.getElementById('captchaLabel').textContent = 'ยืนยันว่าไม่ใช่บอท: ผลรวมของตัวเลขนี้คือเท่าใด';
+let turnstileWidgetId = null;
+function renderTurnstile(){
+  const el = document.getElementById('turnstileWidget');
+  if(!el || typeof turnstile === 'undefined') return;
+  if(turnstileWidgetId !== null){
+    turnstile.reset(turnstileWidgetId);
+    return;
+  }
+  turnstileWidgetId = turnstile.render('#turnstileWidget', {
+    sitekey: '0x4AAAAAAEAYqxxgc-FDeBKy'
+  });
 }
-newCaptcha();
+// Turnstile's script loads async — try rendering once it's ready
+window.addEventListener('load', renderTurnstile);
 
 function showMsg(id, text, type){
   const el = document.getElementById(id);
@@ -351,14 +352,14 @@ async function doSignup(){
   const username = document.getElementById('suUsername').value.trim();
   const email = document.getElementById('suEmail').value.trim();
   const password = document.getElementById('suPass').value;
-  const captchaInput = document.getElementById('captchaA').value;
   const honeypot = document.getElementById('hpField').value;
+  const turnstileToken = typeof turnstile !== 'undefined' && turnstileWidgetId !== null
+    ? turnstile.getResponse(turnstileWidgetId) : '';
 
   if(honeypot){ return; }
 
-  if(parseInt(captchaInput) !== captchaAnswer){
-    showMsg('signupMsg', 'คำตอบไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง', 'error');
-    newCaptcha();
+  if(!turnstileToken){
+    showMsg('signupMsg', 'กรุณายืนยันตัวตนในช่อง "ฉันไม่ใช่โปรแกรมอัตโนมัติ" ก่อน', 'error');
     return;
   }
   if(!username || !email || !password){
@@ -377,7 +378,7 @@ async function doSignup(){
 
   if(error){
     showMsg('signupMsg', translateAuthError(error.message), 'error');
-    newCaptcha();
+    renderTurnstile();
     return;
   }
 
