@@ -275,12 +275,13 @@
   .card-body{padding:14px 16px 16px;}
   .card-title{font-size:14.5px;font-weight:600;margin-bottom:4px;}
   .card-meta{font-size:12.5px;color:var(--slate);margin-bottom:12px;}
-  .card-foot{display:flex;align-items:center;justify-content:space-between;}
+  .card-foot{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
   .price{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:15px;color:var(--indigo);}
   .price-old{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--slate);text-decoration:line-through;margin-right:6px;}
   .buy-btn{
-    font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:8px;
-    background:var(--ink);color:var(--paper);border:none;cursor:pointer;
+    display:block;width:100%;text-align:center;
+    font-size:13.5px;font-weight:700;padding:11px 13px;border-radius:9px;
+    background:var(--indigo);color:#fff;border:none;cursor:pointer;
   }
   [data-theme="dark"] .buy-btn{background:var(--indigo);}
 
@@ -578,11 +579,11 @@
         <div class="card-body">
           <div class="card-title">${p.title}</div>
           <div class="card-meta">${p.description || ''}</div>
-          <div class="stock-tag">เหลือ ${p.stock} ชิ้น</div>
-          <div class="card-foot" style="margin-top:8px;">
-            <div><span class="price">฿${p.price}</span></div>
-            <span class="buy-btn">ดูรายละเอียด</span>
+          <div class="card-foot">
+            <div class="stock-tag">เหลือ ${p.stock} ชิ้น</div>
+            <span class="price">฿${p.price}</span>
           </div>
+          <span class="buy-btn">🛒 ดูรายละเอียด</span>
         </div>
       </a>
     `).join('') || `<p style="color:var(--slate);font-size:13.5px;">ยังไม่มีสินค้าในหมวดนี้</p>`;
