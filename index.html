@@ -170,7 +170,7 @@
   .buy-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center;}
   .buy-modal-overlay.open{display:flex;}
   @media(min-width:600px){.buy-modal-overlay{align-items:center;}}
-  .buy-modal{background:var(--paper-2);width:100%;max-width:420px;border-radius:20px 20px 0 0;padding:22px 20px 26px;transform:translateY(20px);transition:transform .2s ease;max-height:88vh;overflow-y:auto;}
+  .buy-modal{background:var(--paper-2);width:100%;max-width:420px;border-radius:20px 20px 0 0;padding:22px 20px calc(26px + env(safe-area-inset-bottom));transform:translateY(20px);transition:transform .2s ease;max-height:88vh;overflow-y:auto;}
   @media(min-width:600px){.buy-modal{border-radius:20px;margin:0 16px;}}
   .buy-modal-overlay.open .buy-modal{transform:translateY(0);}
   .buy-modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}

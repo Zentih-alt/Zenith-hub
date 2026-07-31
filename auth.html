@@ -216,6 +216,7 @@
         <button class="btn-text" onclick="showForgot()">ลืมรหัสผ่าน?</button>
       </div>
       <input type="password" id="liPass" placeholder="รหัสผ่าน">
+      <div id="turnstileWidgetLogin" style="margin-bottom:14px;"></div>
       <button class="btn btn-primary btn-full" onclick="doLogin()">เข้าสู่ระบบ</button>
       <div class="switch-row">ยังไม่มีบัญชี? <a onclick="showSignup()">สมัครสมาชิก</a></div>
       <div class="msg" id="loginMsg"></div>
@@ -305,6 +306,7 @@ function showForgot(){
 }
 
 let turnstileWidgetId = null;
+let turnstileWidgetIdLogin = null;
 function renderTurnstile(){
   const el = document.getElementById('turnstileWidget');
   if(!el || typeof turnstile === 'undefined') return;
@@ -316,8 +318,19 @@ function renderTurnstile(){
     sitekey: '0x4AAAAAAEAYqxxgc-FDeBKy'
   });
 }
+function renderTurnstileLogin(){
+  const el = document.getElementById('turnstileWidgetLogin');
+  if(!el || typeof turnstile === 'undefined') return;
+  if(turnstileWidgetIdLogin !== null){
+    turnstile.reset(turnstileWidgetIdLogin);
+    return;
+  }
+  turnstileWidgetIdLogin = turnstile.render('#turnstileWidgetLogin', {
+    sitekey: '0x4AAAAAAEAYqxxgc-FDeBKy'
+  });
+}
 // Turnstile's script loads async — try rendering once it's ready
-window.addEventListener('load', renderTurnstile);
+window.addEventListener('load', ()=>{ renderTurnstile(); renderTurnstileLogin(); });
 
 function showMsg(id, text, type){
   const el = document.getElementById(id);
@@ -339,9 +352,12 @@ function translateAuthError(message){
 async function doLogin(){
   const email = document.getElementById('liEmail').value.trim();
   const password = document.getElementById('liPass').value;
+  const turnstileToken = typeof turnstile !== 'undefined' && turnstileWidgetIdLogin !== null
+    ? turnstile.getResponse(turnstileWidgetIdLogin) : '';
   if(!email || !password){ showMsg('loginMsg','กรอกอีเมลและรหัสผ่านให้ครบ','error'); return; }
+  if(!turnstileToken){ showMsg('loginMsg','กรุณายืนยันตัวตนในช่อง "ฉันไม่ใช่โปรแกรมอัตโนมัติ" ก่อน','error'); return; }
   const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if(error){ showMsg('loginMsg', translateAuthError(error.message), 'error'); return; }
+  if(error){ showMsg('loginMsg', translateAuthError(error.message), 'error'); renderTurnstileLogin(); return; }
   showMsg('loginMsg', 'เข้าสู่ระบบสำเร็จ กำลังพาไปหน้าแรก...', 'success');
   const params = new URLSearchParams(window.location.search);
   const next = params.get('next') || 'index.html';
