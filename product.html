@@ -119,16 +119,37 @@
     const btn = document.getElementById('buyBtn');
     btn.disabled = true; btn.textContent = 'กำลังสั่งซื้อ...';
 
+    // ดึง secret_data ของสินค้า (ยูส/พาส/รหัสไอดี)
+    const { data: fullProduct } = await supabaseClient
+      .from('products')
+      .select('secret_data')
+      .eq('id', productData.id)
+      .single();
+    const deliveryData = fullProduct?.secret_data || '';
+
     const newBalance = profile.wallet_balance - total;
     await supabaseClient.from('profiles').update({ wallet_balance: newBalance }).eq('id', user.id);
     await supabaseClient.from('products').update({ stock: productData.stock - qty }).eq('id', productData.id);
     await supabaseClient.from('orders').insert({
-      user_id: user.id, product_id: productData.id, product_title: productData.title,
-      price: total, status: 'completed'
+      user_id: user.id,
+      product_id: productData.id,
+      product_title: productData.title,
+      price: total,
+      status: 'completed',
+      delivery_data: deliveryData
     });
 
+    // โชว์ข้อมูลส่งของทันทีหลังซื้อสำเร็จ
     msg.className = 'msg success';
-    msg.textContent = 'สั่งซื้อสำเร็จ! ขอบคุณที่ใช้บริการ Zenith Shop';
+    if(deliveryData){
+      msg.innerHTML = `
+        <div style="margin-bottom:8px;font-weight:700;">✅ สั่งซื้อสำเร็จ! นี่คือข้อมูลสินค้าของคุณ</div>
+        <div style="background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:13px;text-align:left;white-space:pre-wrap;word-break:break-all;">${deliveryData}</div>
+        <div style="margin-top:8px;font-size:12px;color:var(--slate);">บันทึกข้อมูลนี้ไว้ด้วย — สามารถดูซ้ำได้ที่ <a href="history.html" style="color:var(--indigo);">ประวัติการซื้อ</a></div>
+      `;
+    } else {
+      msg.textContent = 'สั่งซื้อสำเร็จ! ขอบคุณที่ใช้บริการ Zenith Shop แอดมินจะส่งข้อมูลให้เร็วๆ นี้';
+    }
     btn.textContent = 'สั่งซื้อสำเร็จ';
   }
 

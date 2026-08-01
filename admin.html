@@ -76,6 +76,7 @@
       <input id="pPrice" type="number" placeholder="ราคา (บาท)">
       <input id="pStock" type="number" placeholder="จำนวนสต็อก">
       <input id="pDesc" class="full" placeholder="รายละเอียดสั้นๆ">
+      <textarea id="pSecret" class="full" rows="3" placeholder="ข้อมูลส่งของ (ยูส/พาส/รหัสไอดี) — ลูกค้าเห็นหลังซื้อเสร็จเท่านั้น" style="font-family:monospace;font-size:12px;resize:vertical;"></textarea>
       <button class="btn full" onclick="addProduct()">+ เพิ่มสินค้า</button>
     </div>
     <table><thead><tr><th>สินค้า</th><th>หมวด</th><th>ราคา</th><th>สต็อก</th><th></th></tr></thead>
@@ -194,9 +195,10 @@
     const price = parseFloat(document.getElementById('pPrice').value);
     const stock = parseInt(document.getElementById('pStock').value || '0');
     const description = document.getElementById('pDesc').value.trim();
+    const secret_data = document.getElementById('pSecret').value.trim();
     if(!title || price === '' || isNaN(price) || price < 0) return;
-    await supabaseClient.from('products').insert({ title, category_id, price, stock, description });
-    ['pTitle','pPrice','pStock','pDesc'].forEach(id=>document.getElementById(id).value='');
+    await supabaseClient.from('products').insert({ title, category_id, price, stock, description, secret_data });
+    ['pTitle','pPrice','pStock','pDesc','pSecret'].forEach(id=>document.getElementById(id).value='');
     loadProducts();
   }
 
