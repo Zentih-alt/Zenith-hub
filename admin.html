@@ -50,10 +50,9 @@
 
 <div id="loginBox">
   <h2>เข้าสู่ระบบแอดมิน</h2>
-  <input type="email" id="loginEmail" placeholder="อีเมลแอดมิน">
-  <input type="password" id="loginPass" placeholder="รหัสผ่าน">
+  <input type="password" id="loginPass" placeholder="รหัสผ่านแอดมิน" onkeydown="if(event.key==='Enter') doLogin()">
   <button class="btn" onclick="doLogin()">เข้าสู่ระบบ</button>
-  <div id="loginErr">อีเมล/รหัสผ่านไม่ถูกต้อง หรือไม่มีสิทธิ์แอดมิน</div>
+  <div id="loginErr">รหัสผ่านไม่ถูกต้อง</div>
 </div>
 
 <div class="wrap" id="dashboard" style="display:none;">
@@ -123,16 +122,14 @@
 <script>
   let categoriesCache = [];
 
+  const DEV_PASSWORD = 'semmerff';
+
   async function doLogin(){
-    const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPass').value;
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if(error){ document.getElementById('loginErr').style.display='block'; return; }
-    const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', data.user.id).single();
-    if(!profile?.is_admin){
-      document.getElementById('loginErr').textContent = 'บัญชีนี้ไม่มีสิทธิ์แอดมิน';
-      document.getElementById('loginErr').style.display='block';
-      await supabaseClient.auth.signOut();
+    const err = document.getElementById('loginErr');
+    if(password !== DEV_PASSWORD){
+      err.textContent = 'รหัสผ่านไม่ถูกต้อง';
+      err.style.display='block';
       return;
     }
     document.getElementById('loginBox').style.display='none';
