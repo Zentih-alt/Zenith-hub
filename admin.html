@@ -1,278 +1,250 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zenith Shop — หลังบ้านแอดมิน</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-  :root{--paper:#F5F5F4;--paper-2:#FFFFFF;--ink:#1A1A1A;--ink-soft:#48484A;--slate:#7A7A7D;--line:#E4E4E2;--indigo:#2563EB;--indigo-soft:#DBEAFE;--green:#1F9D6C;--red:#C23434;}
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;}
-  .wrap{max-width:1000px;margin:0 auto;padding:24px 20px 60px;}
-  h1{font-family:'Space Grotesk',sans-serif;font-size:22px;margin-bottom:4px;}
-  .sub{color:var(--slate);font-size:13px;margin-bottom:24px;}
-
-  /* LOGIN */
-  #loginBox{max-width:360px;margin:80px auto;background:var(--paper-2);border:1px solid var(--line);border-radius:16px;padding:28px;}
-  #loginBox h2{font-family:'Space Grotesk',sans-serif;font-size:19px;margin-bottom:18px;text-align:center;}
-  input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font-size:14px;margin-bottom:10px;background:var(--paper);color:var(--ink);}
-  button{cursor:pointer;font-family:'Inter',sans-serif;}
-  .btn{background:var(--indigo);color:#fff;border:none;padding:11px;border-radius:9px;font-weight:600;font-size:14px;width:100%;}
-  .btn-sm{padding:7px 12px;border-radius:7px;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--paper-2);color:var(--ink);}
-  .btn-sm.danger{color:var(--red);border-color:var(--red);}
-  .btn-sm.primary{background:var(--indigo);color:#fff;border:none;}
-  #loginErr{color:var(--red);font-size:12.5px;margin-top:6px;text-align:center;display:none;}
-
-  /* TABS */
-  .tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
-  .tab{padding:9px 16px;border-radius:9px;font-size:13.5px;font-weight:600;background:var(--paper-2);border:1px solid var(--line);color:var(--ink-soft);}
-  .tab.active{background:var(--indigo);color:#fff;border-color:var(--indigo);}
-  .panel{display:none;}
-  .panel.active{display:block;}
-
-  table{width:100%;border-collapse:collapse;background:var(--paper-2);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:13px;}
-  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);}
-  th{background:var(--indigo-soft);color:var(--indigo);font-size:11.5px;text-transform:uppercase;}
-  tr:last-child td{border-bottom:none;}
-  .status{padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;}
-  .status.pending{background:#FDF1D8;color:#946200;}
-  .status.completed,.status.approved{background:#E3F6EC;color:var(--green);}
-
-  .add-form{background:var(--paper-2);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .add-form input,.add-form select{margin-bottom:0;}
-  .add-form .full{grid-column:1/-1;}
-  .row-actions{display:flex;gap:6px;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการหลังบ้าน - Zenith Shop</title>
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    <script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
+    <script src="config.js"></script>
+    <link href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css)" rel="stylesheet">
 </head>
-<body>
+<body class="bg-slate-900 text-white min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-slate-800/80 border-b border-slate-700 p-4 sticky top-0 z-50 backdrop-blur">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <img src="zenith-logo.png" alt="Zenith Logo" class="h-8 w-8 object-contain" onerror="this.src='[https://via.placeholder.com/32](https://via.placeholder.com/32)'">
+                <h1 class="text-xl font-bold text-cyan-400">Zenith Admin Panel</h1>
+            </div>
+            <a href="index.html" class="text-slate-300 hover:text-white flex items-center gap-2 bg-slate-700 px-3 py-1.5 rounded-lg text-sm">
+                <i class="fa-solid fa-house"></i> กลับหน้าหลัก
+            </a>
+        </div>
+    </nav>
 
-<div id="loginBox">
-  <h2>เข้าสู่ระบบแอดมิน</h2>
-  <input type="password" id="loginPass" placeholder="รหัสผ่านแอดมิน" onkeydown="if(event.key==='Enter') doLogin()">
-  <button class="btn" onclick="doLogin()">เข้าสู่ระบบ</button>
-  <div id="loginErr">รหัสผ่านไม่ถูกต้อง</div>
-</div>
+    <div class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- ฟอร์มเพิ่มสินค้า -->
+        <div class="lg:col-span-1 bg-slate-800 p-6 rounded-xl border border-slate-700 h-fit">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-cyan-400">
+                <i class="fa-solid fa-plus-circle"></i> เพิ่มสินค้าใหม่
+            </h2>
+            <form id="addProductForm" onsubmit="handleProductSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">ชื่อสินค้า *</label>
+                    <input type="text" id="prodName" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none">
+                </div>
 
-<div class="wrap" id="dashboard" style="display:none;">
-  <h1>Zenith Shop — หลังบ้าน</h1>
-  <div class="sub">จัดการสินค้า หมวดหมู่ ออเดอร์ และเครดิตลูกค้า</div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">หมวดหมู่สินค้า *</label>
+                    <select id="prodCategory" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none text-slate-200">
+                        <option value="">-- กำลังโหลดหมวดหมู่ --</option>
+                    </select>
+                </div>
 
-  <div class="tabs">
-    <div class="tab active" data-tab="products">สินค้า</div>
-    <div class="tab" data-tab="categories">หมวดหมู่</div>
-    <div class="tab" data-tab="orders">ออเดอร์</div>
-    <div class="tab" data-tab="topups">คำขอเติมเงิน</div>
-    <div class="tab" data-tab="users">ผู้ใช้ / เครดิต</div>
-  </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">ราคา (บาท) *</label>
+                    <input type="number" id="prodPrice" min="0" step="0.01" required class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none">
+                </div>
 
-  <!-- PRODUCTS -->
-  <div class="panel active" id="panel-products">
-    <div class="add-form">
-      <input id="pTitle" placeholder="ชื่อสินค้า">
-      <select id="pCategory"></select>
-      <input id="pPrice" type="number" placeholder="ราคา (บาท)">
-      <input id="pStock" type="number" placeholder="จำนวนสต็อก">
-      <input id="pDesc" class="full" placeholder="รายละเอียดสั้นๆ">
-      <textarea id="pSecret" class="full" rows="3" placeholder="ข้อมูลส่งของ (ยูส/พาส/รหัสไอดี) — ลูกค้าเห็นหลังซื้อเสร็จเท่านั้น" style="font-family:monospace;font-size:12px;resize:vertical;"></textarea>
-      <button class="btn full" onclick="addProduct()">+ เพิ่มสินค้า</button>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">รูปภาพ URL *</label>
+                    <input type="url" id="prodImage" required placeholder="[https://example.com/image.png](https://example.com/image.png)" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">รายละเอียดสินค้า</label>
+                    <textarea id="prodDesc" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">ข้อมูลลับ / โค้ดสินค้า (สำหรับผู้ซื้อ)</label>
+                    <textarea id="prodSecret" rows="2" placeholder="เช่น Username:Password หรือ Redeem Code" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm focus:border-cyan-500 outline-none font-mono"></textarea>
+                </div>
+
+                <button type="submit" id="btnSubmit" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-2.5 rounded-lg transition-colors flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-save"></i> บันทึกสินค้า
+                </button>
+            </form>
+        </div>
+
+        <!-- รายการสินค้าทั้งหมด -->
+        <div class="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold flex items-center gap-2 text-cyan-400">
+                    <i class="fa-solid fa-boxes-stacked"></i> รายการสินค้าทั้งหมด
+                </h2>
+                <button onclick="loadAdminProducts()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg flex items-center gap-1">
+                    <i class="fa-solid fa-rotate"></i> รีเฟรช
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-slate-300">
+                    <thead class="text-xs uppercase bg-slate-900/60 text-slate-400 border-b border-slate-700">
+                        <tr>
+                            <th class="p-3">สินค้า</th>
+                            <th class="p-3">หมวดหมู่</th>
+                            <th class="p-3">ราคา</th>
+                            <th class="p-3 text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productList" class="divide-y divide-slate-700/50">
+                        <tr>
+                            <td colspan="4" class="p-4 text-center text-slate-500">กำลังโหลดรายการสินค้า...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-    <table><thead><tr><th>สินค้า</th><th>หมวด</th><th>ราคา</th><th>สต็อก</th><th></th></tr></thead>
-      <tbody id="productsTable"></tbody>
-    </table>
-  </div>
 
-  <!-- CATEGORIES -->
-  <div class="panel" id="panel-categories">
-    <div class="add-form">
-      <input id="cKey" placeholder="รหัสหมวด (key) เช่น chicken">
-      <input id="cName" placeholder="ชื่อหมวด เช่น ไก่ตัน">
-      <input id="cIcon" class="full" placeholder="ไอคอน emoji เช่น 🐔">
-      <button class="btn full" onclick="addCategory()">+ เพิ่มหมวดหมู่</button>
-    </div>
-    <table><thead><tr><th>ไอคอน</th><th>ชื่อ</th><th>Key</th><th></th></tr></thead>
-      <tbody id="categoriesTable"></tbody>
-    </table>
-  </div>
+    <!-- Container สำหรับ Toast แจ้งเตือน -->
+    <div id="toast" class="fixed bottom-5 right-5 hidden bg-slate-800 text-white px-5 py-3 rounded-xl border shadow-xl z-50 transition-all duration-300"></div>
 
-  <!-- ORDERS -->
-  <div class="panel" id="panel-orders">
-    <table><thead><tr><th>ลูกค้า</th><th>สินค้า</th><th>ราคา</th><th>สถานะ</th><th>เวลา</th></tr></thead>
-      <tbody id="ordersTable"></tbody>
-    </table>
-  </div>
+    <script>
+        // เรียกใช้อินสแตนซ์ Supabase จาก config.js
+        const supabase = window.supabaseClient;
 
-  <!-- TOPUPS -->
-  <div class="panel" id="panel-topups">
-    <table><thead><tr><th>ลูกค้า</th><th>ยอดเติม</th><th>สลิป</th><th>สถานะ</th><th></th></tr></thead>
-      <tbody id="topupsTable"></tbody>
-    </table>
-  </div>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadCategories();
+            await loadAdminProducts();
+        });
 
-  <!-- USERS -->
-  <div class="panel" id="panel-users">
-    <table><thead><tr><th>ชื่อผู้ใช้</th><th>ยอดกระเป๋า</th><th>ปรับเครดิต</th></tr></thead>
-      <tbody id="usersTable"></tbody>
-    </table>
-  </div>
-</div>
+        // แจ้งเตือน Toast
+        function showToast(message, isSuccess = true) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.className = `fixed bottom-5 right-5 px-5 py-3 rounded-xl border shadow-xl z-50 transition-all duration-300 ${
+                isSuccess ? 'bg-emerald-900/90 border-emerald-500 text-emerald-200' : 'bg-rose-900/90 border-rose-500 text-rose-200'
+            }`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3500);
+        }
 
-<script src="config.js"></script>
-<script>
-  let categoriesCache = [];
+        // ดึงรายการหมวดหมู่
+        async function loadCategories() {
+            const select = document.getElementById('prodCategory');
+            try {
+                const { data, error } = await supabase.from('categories').select('*').order('name');
+                if (error) throw error;
 
-  const DEV_PASSWORD = 'semmerff';
+                if (!data || data.length === 0) {
+                    select.innerHTML = '<option value="">-- ไม่พบหมวดหมู่ (โปรดสร้างใน DB) --</option>';
+                    return;
+                }
 
-  async function doLogin(){
-    const password = document.getElementById('loginPass').value;
-    const err = document.getElementById('loginErr');
-    if(password !== DEV_PASSWORD){
-      err.textContent = 'รหัสผ่านไม่ถูกต้อง';
-      err.style.display='block';
-      return;
-    }
-    document.getElementById('loginBox').style.display='none';
-    document.getElementById('dashboard').style.display='block';
-    loadAll();
-  }
+                select.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>' + 
+                    data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            } catch (err) {
+                console.error('Error loading categories:', err);
+                select.innerHTML = '<option value="">-- โหลดหมวดหมู่ไม่สำเร็จ --</option>';
+            }
+        }
 
-  document.querySelectorAll('.tab').forEach(tab=>{
-    tab.addEventListener('click', ()=>{
-      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-      tab.classList.add('active');
-      document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
-    });
-  });
+        // เพิ่มสินค้า
+        async function handleProductSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            
+            const category_id = document.getElementById('prodCategory').value;
+            const name = document.getElementById('prodName').value.trim();
+            const price = parseFloat(document.getElementById('prodPrice').value);
+            const image_url = document.getElementById('prodImage').value.trim();
+            const description = document.getElementById('prodDesc').value.trim();
+            const secret_data = document.getElementById('prodSecret').value.trim();
 
-  async function loadAll(){
-    await loadCategories();
-    await loadProducts();
-    await loadOrders();
-    await loadTopups();
-    await loadUsers();
-  }
+            if (!category_id) {
+                showToast('กรุณาเลือกหมวดหมู่สินค้า', false);
+                return;
+            }
 
-  async function loadCategories(){
-    const { data } = await supabaseClient.from('categories').select('*').order('created_at');
-    categoriesCache = data || [];
-    document.getElementById('pCategory').innerHTML = categoriesCache.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
-    document.getElementById('categoriesTable').innerHTML = categoriesCache.map(c=>`
-      <tr><td>${c.icon||''}</td><td>${c.name}</td><td><code>${c.key}</code></td>
-      <td><button class="btn-sm danger" onclick="deleteRow('categories','${c.id}', loadCategories)">ลบ</button></td></tr>
-    `).join('');
-  }
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
 
-  async function addCategory(){
-    const key = document.getElementById('cKey').value.trim();
-    const name = document.getElementById('cName').value.trim();
-    const icon = document.getElementById('cIcon').value.trim();
-    if(!key || !name) return;
-    await supabaseClient.from('categories').insert({ key, name, icon });
-    document.getElementById('cKey').value=''; document.getElementById('cName').value=''; document.getElementById('cIcon').value='';
-    loadCategories();
-  }
+            try {
+                const payload = {
+                    name,
+                    category_id,
+                    price,
+                    image_url,
+                    description,
+                    secret_data: secret_data || null,
+                    is_active: true
+                };
 
-  async function loadProducts(){
-    const { data } = await supabaseClient.from('products').select('*, categories(name)').order('created_at', {ascending:false});
-    document.getElementById('productsTable').innerHTML = (data||[]).map(p=>`
-      <tr><td>${p.title}</td><td>${p.categories?.name || '-'}</td><td>฿${p.price}</td><td>${p.stock}</td>
-      <td class="row-actions">
-        <button class="btn-sm" onclick="adjustStock('${p.id}', ${p.stock}, 1)">+1</button>
-        <button class="btn-sm" onclick="adjustStock('${p.id}', ${p.stock}, -1)">-1</button>
-        <button class="btn-sm danger" onclick="deleteRow('products','${p.id}', loadProducts)">ลบ</button>
-      </td></tr>
-    `).join('');
-  }
+                const { data, error } = await supabase.from('products').insert([payload]).select();
 
-  async function addProduct(){
-    const title = document.getElementById('pTitle').value.trim();
-    const category_id = document.getElementById('pCategory').value;
-    const price = parseFloat(document.getElementById('pPrice').value);
-    const stock = parseInt(document.getElementById('pStock').value || '0');
-    const description = document.getElementById('pDesc').value.trim();
-    const secret_data = document.getElementById('pSecret').value.trim();
-    if(!title || price === '' || isNaN(price) || price < 0) return;
-    await supabaseClient.from('products').insert({ title, category_id, price, stock, description, secret_data });
-    ['pTitle','pPrice','pStock','pDesc','pSecret'].forEach(id=>document.getElementById(id).value='');
-    loadProducts();
-  }
+                if (error) throw error;
 
-  async function adjustStock(id, current, delta){
-    const next = Math.max(0, current + delta);
-    await supabaseClient.from('products').update({ stock: next }).eq('id', id);
-    loadProducts();
-  }
+                showToast('เพิ่มสินค้าสำเร็จแล้ว!', true);
+                document.getElementById('addProductForm').reset();
+                await loadAdminProducts();
+            } catch (err) {
+                console.error('Error adding product:', err);
+                showToast(`เกิดข้อผิดพลาด: ${err.message}`, false);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-save"></i> บันทึกสินค้า';
+            }
+        }
 
-  async function deleteRow(table, id, refresh){
-    if(!confirm('ยืนยันการลบ?')) return;
-    await supabaseClient.from(table).delete().eq('id', id);
-    refresh();
-  }
+        // โหลดรายการสินค้าสำหรับ Admin
+        async function loadAdminProducts() {
+            const tbody = document.getElementById('productList');
+            try {
+                const { data, error } = await supabase
+                    .from('products')
+                    .select('*, categories(name)')
+                    .order('created_at', { ascending: false });
 
-  async function loadOrders(){
-    const { data } = await supabaseClient.from('orders').select('*, profiles(username)').order('created_at', {ascending:false}).limit(100);
-    document.getElementById('ordersTable').innerHTML = (data||[]).map(o=>`
-      <tr><td>${o.profiles?.username || '-'}</td><td>${o.product_title}</td><td>฿${o.price}</td>
-      <td><span class="status ${o.status}">${o.status}</span></td>
-      <td>${new Date(o.created_at).toLocaleString('th-TH')}</td></tr>
-    `).join('');
-  }
+                if (error) throw error;
 
-  async function loadTopups(){
-    const { data } = await supabaseClient.from('topups').select('*, profiles(username)').order('created_at', {ascending:false});
-    document.getElementById('topupsTable').innerHTML = (data||[]).map(t=>`
-      <tr><td>${t.profiles?.username || '-'}</td><td>฿${t.amount}</td>
-      <td>${t.slip_url ? `<a href="${t.slip_url}" target="_blank">ดูสลิป</a>` : '-'}</td>
-      <td><span class="status ${t.status}">${t.status}</span></td>
-      <td class="row-actions">
-        ${t.status==='pending' ? `<button class="btn-sm primary" onclick="approveTopup('${t.id}','${t.user_id}',${t.amount})">อนุมัติ</button>
-        <button class="btn-sm danger" onclick="rejectTopup('${t.id}')">ปฏิเสธ</button>` : ''}
-      </td></tr>
-    `).join('');
-  }
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">ยังไม่มีสินค้าในระบบ</td></tr>';
+                    return;
+                }
 
-  async function approveTopup(id, userId, amount){
-    const { data: profile } = await supabaseClient.from('profiles').select('wallet_balance').eq('id', userId).single();
-    const newBalance = (profile?.wallet_balance || 0) + amount;
-    await supabaseClient.from('profiles').update({ wallet_balance: newBalance }).eq('id', userId);
-    await supabaseClient.from('topups').update({ status: 'approved' }).eq('id', id);
-    loadTopups(); loadUsers();
-  }
-  async function rejectTopup(id){
-    await supabaseClient.from('topups').update({ status: 'rejected' }).eq('id', id);
-    loadTopups();
-  }
+                tbody.innerHTML = data.map(item => `
+                    <tr class="hover:bg-slate-700/30">
+                        <td class="p-3 flex items-center gap-3">
+                            <img src="${item.image_url}" class="w-10 h-10 object-cover rounded" onerror="this.src='[https://via.placeholder.com/40](https://via.placeholder.com/40)'">
+                            <div>
+                                <div class="font-medium text-slate-200">${item.name}</div>
+                                <div class="text-xs text-slate-500">${item.id.substring(0, 8)}...</div>
+                            </div>
+                        </td>
+                        <td class="p-3 text-slate-400">${item.categories?.name || 'ไม่มีหมวดหมู่'}</td>
+                        <td class="p-3 font-semibold text-emerald-400">฿${parseFloat(item.price).toLocaleString()}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="deleteProduct('${item.id}', '${item.name}')" class="bg-rose-600/20 text-rose-400 hover:bg-rose-600 hover:text-white px-3 py-1.5 rounded-lg text-xs transition-colors">
+                                <i class="fa-solid fa-trash"></i> ลบ
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error('Error loading admin products:', err);
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-rose-400">เกิดข้อผิดพลาดในการดึงข้อมูล: ${err.message}</td></tr>`;
+            }
+        }
 
-  async function loadUsers(){
-    const { data } = await supabaseClient.from('profiles').select('*').order('created_at', {ascending:false});
-    document.getElementById('usersTable').innerHTML = (data||[]).map(u=>`
-      <tr><td>${u.username}</td><td>฿${u.wallet_balance}</td>
-      <td class="row-actions">
-        <button class="btn-sm" onclick="adjustWallet('${u.id}', ${u.wallet_balance}, 100)">+100</button>
-        <button class="btn-sm" onclick="adjustWallet('${u.id}', ${u.wallet_balance}, -100)">-100</button>
-      </td></tr>
-    `).join('');
-  }
-  async function adjustWallet(id, current, delta){
-    const next = Math.max(0, current + delta);
-    await supabaseClient.from('profiles').update({ wallet_balance: next }).eq('id', id);
-    loadUsers();
-  }
+        // ลบสินค้า
+        async function deleteProduct(id, name) {
+            if (!confirm(`คุณต้องการลบสินค้า "${name}" ใช่หรือไม่?`)) return;
 
-  // ถ้ายัง login ค้างอยู่ (refresh หน้า) ให้เช็คสิทธิ์แล้วเข้าตรงได้เลย
-  (async function(){
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if(user){
-      const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
-      if(profile?.is_admin){
-        document.getElementById('loginBox').style.display='none';
-        document.getElementById('dashboard').style.display='block';
-        loadAll();
-      }
-    }
-  })();
-</script>
+            try {
+                const { error } = await supabase.from('products').delete().eq('id', id);
+                if (error) throw error;
+
+                showToast(`ลบสินค้า "${name}" เรียบร้อยแล้ว`, true);
+                await loadAdminProducts();
+            } catch (err) {
+                console.error('Error deleting product:', err);
+                showToast(`ลบไม่สำเร็จ: ${err.message}`, false);
+            }
+        }
+    </script>
 </body>
 </html>
