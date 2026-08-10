@@ -1,0 +1,24 @@
+-- ระบบตรวจ Key (PUSL-V4)
+local PUSL = loadstring(game:HttpGet("https://secure.pandauth.com/pv4/lib"))()
+if not PUSL or type(PUSL.configure) ~= "function" then
+    return warn("[Zenith Hub] ไม่สามารถเชื่อมต่อระบบ Key ได้")
+end
+
+PUSL.configure({
+    serviceId = "zenithhub",
+})
+
+local key = getgenv().Key
+local result = PUSL.validate(key)
+
+-- ถ้า Key ผิด หรือ หมดอายุ
+if not result.success then
+    warn("[Zenith Hub] ลิงก์สำหรับกดรับ Key: " .. PUSL.getKeyUrl())
+    game:GetService("Players").LocalPlayer:Kick("[Zenith Hub] Key ไม่ถูกต้อง หรือหมดอายุแล้ว!")
+    return
+end
+
+print("[Zenith Hub] ยืนยัน Key สำเร็จ!")
+
+-- ดึงสคริปต์หลัก Zenith ของมึงมาทำงาน
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Zentih-alt/Zenith-hub/refs/heads/main/Zentih"))()
