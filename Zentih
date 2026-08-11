@@ -1,8 +1,10 @@
--- [[ ZENITH SOUL HUB - COMPLETE SCRIPT ENGINE ]] --
--- UI TEXTS UPDATED & ANTI-KICK BYPASS INCLUDED
+-- [[ ZENITH SOUL HUB - DUAL MODE REMOTE SPY & FLOATING UI ]] --
+-- เพิ่มปุ่มลอยบนหน้าจอ (Floating Control Widget)
+-- รองรับ 2 โหมด: Mode 1 (Normal Play + Record) และ Mode 2 (Block/Intercept + Record)
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local CoreGui = game:GetService("CoreGui") or LocalPlayer:WaitForChild("PlayerGui")
 
 -- โหลด Rayfield UI ปลอดภัยด้วย pcall
 local success, Rayfield = pcall(function()
@@ -15,15 +17,13 @@ if not success or not Rayfield then
 end
 
 --------------------------------------------------------------------------------
--- 📝 UI TEXTS (อัปเดตล่าสุดตามที่คุณปรับแต่ง)
+-- 📝 UI TEXTS (ข้อความระบบ)
 --------------------------------------------------------------------------------
 local UI_TEXTS = {
-    -- Setup & Loading
     WINDOW_TITLE = "Zenith  HUB ",
     LOADING_TITLE = "Zenith Soul HUB",
     LOADING_SUBTITLE = "Zentih dump",
 
-    -- Tab 1: Targeted Dumper
     TAB_DUMP = "Target Dumper",
     HEADER_DUMP_TITLE = "ดึงข้อมูลเซอร์วิสเจาะจง",
     HEADER_DUMP_DESC = "เลือกเซอร์วิสเกมที่ต้องการ ระบบจะดึงโครงสร้างและข้อมูลทั้งหมดออกมาให้เลย | แบบนี้ดีกว่า Valen Hub นะ",
@@ -33,7 +33,6 @@ local UI_TEXTS = {
     BTN_DUMP_ALL = "ดึงข้อมูลเซอร์วิสที่เลือก",
     BTN_DUMP_ESSENTIAL = "ดึงแค่ข้อมูลสำคัญ (สคริปต์ NPC ค่าต่างๆ)",
 
-    -- Tab 2: Hidden Assets
     TAB_HIDDEN = "Hidden Assets",
     HEADER_HIDDEN_TITLE = "แสกนหาข้อมูลที่ซ่อนอยู่",
     HEADER_HIDDEN_DESC = "ส่องลึกเข้าไปในหน่วยความจำ เก็บของซ่อน ไนล์ หรือออปเจ็คที่เกมปกบังเอาไว้",
@@ -41,7 +40,6 @@ local UI_TEXTS = {
     PLACEHOLDER_HIDDEN_FILENAME = "ข้อมูลที่ซ่อนอยู่",
     BTN_HIDDEN_EXTRACT = "เริ่มแสกน + ดึงของที่ซ่อนออกมา",
 
-    -- Tab 3: Specific Search
     TAB_SEARCH = "Keyword Search",
     HEADER_SEARCH_TITLE = "ค้นหาแบบเจาะจงด้วยคำสำคัญ",
     HEADER_SEARCH_DESC = "พิมพ์คำที่อยากหา ระบบจะค้นให้ทั่วทุกมุมเกม ไม่พลาดแม้แต่จุดเล็กๆ",
@@ -52,17 +50,16 @@ local UI_TEXTS = {
     PLACEHOLDER_SEARCH_FILENAME = "ผลลัพธ์การค้นหา",
     BTN_SEARCH_EXECUTE = "เริ่มค้นหาเลย",
 
-    -- Tab 4: Remote Spy
     TAB_SPY = "Remote Spy",
-    HEADER_SPY_TITLE = "บันทึกทุกการเรียกใช้รีโมท (Bypass Anti-Cheat)",
-    HEADER_SPY_DESC = "แอบดู + เก็บล็อก RemoteEvent/Function พร้อมระบบหลบ Anti-Cheat ป้องกันโดนเตะ 267",
+    HEADER_SPY_TITLE = "บันทึกทุกการเรียกใช้รีโมท (Dual Mode)",
+    HEADER_SPY_DESC = "มีปุ่มลอยควบคุมหน้าจอ สลับได้ 2 โหมด: โหมดเล่นปกติ+อัด หรือ โหมดบล็อกไม่ส่งไปเกม+อัด",
     LABEL_SPY_FILENAME = "ตั้งชื่อไฟล์บันทึก",
     PLACEHOLDER_SPY_FILENAME = "ล็อกรีโมททั้งหมด",
-    TOGGLE_SPY_ENABLE = "เปิดใช้งาน Remote Spy (Stealth Mode)",
+    TOGGLE_SPY_ENABLE = "เปิดใช้งาน Remote Spy",
+    TOGGLE_BLOCK_MODE = "โหมดบล็อก Remote (Block Mode: ไม่ส่งไปเกม)",
     BTN_SPY_SAVE = "บันทึกล็อกที่เก็บไว้",
     BTN_SPY_CLEAR = "ล้างล็อกทั้งหมดเริ่มใหม่",
 
-    -- Tab 5: Decompiler
     TAB_DECOMP = "Decompiler",
     HEADER_DECOMP_TITLE = "แปลงสคริปต์กลับมาเป็นโค้ดอ่านได้",
     HEADER_DECOMP_DESC = "ดึงสคริปต์ฝั่งไคลเอ็นต์ทั้งหมดออกมา แปลงเป็นโค้ด Lua ที่อ่านเข้าใจง่าย ไม่ยุ่งยาก",
@@ -70,7 +67,6 @@ local UI_TEXTS = {
     PLACEHOLDER_DECOMP_FILENAME = "ซอร์สโค้ดที่แปลงแล้ว",
     BTN_DECOMP_START = "เริ่มแปลงสคริปต์ไคลเอ็นต์ทั้งหมด",
 
-    -- Tab 6: Dev Tools
     TAB_TOOLS = "Dev Tools",
     HEADER_TOOLS_TITLE = "รวมเครื่องมือสายสคริปเตอร์",
     HEADER_TOOLS_DESC = "รันเครื่องมือเจาะระบบยอดฮิต (Dex, SimpleSpy) ได้โดยตรงจากที่นี่",
@@ -79,7 +75,6 @@ local UI_TEXTS = {
     BTN_RUN_TURTLESPY = "เปิด Turtle Spy",
     BTN_RUN_IY = "เปิด Infinite Yield",
 
-    -- Folder Settings
     SUBFOLDER_NAME = "Zentih"
 }
 
@@ -105,6 +100,7 @@ local Config = {
     SearchLocation = "Workspace",
     SearchKeyword = "",
     RemoteSpyActive = false,
+    BlockRemoteServer = false, -- false = โหมดเล่นปกติ (Normal), true = โหมดบล็อก (Block)
     LoggedRemotes = {}
 }
 
@@ -133,7 +129,7 @@ local function SaveFileToRootFolder(baseFilename, dataTable)
 end
 
 --------------------------------------------------------------------------------
--- 🎯 Filter Function (ดึงเฉพาะส่วนทำสคริปต์ คลีนบรรทัดให้ AI)
+-- 🎯 Filter Function (ดึงเฉพาะส่วนทำสคริปต์)
 --------------------------------------------------------------------------------
 local function IsEssentialData(item)
     local className = item.ClassName
@@ -156,6 +152,68 @@ local function IsEssentialData(item)
 
     return false, nil
 end
+
+--------------------------------------------------------------------------------
+-- 🔘 FLOATING WIDGET (ปุ่มลอยไม่บังจอ สำหรับเปลี่ยนโหมด/เปิดอัด)
+--------------------------------------------------------------------------------
+local FloatGui = Instance.new("ScreenGui")
+FloatGui.Name = "ZenithFloatingWidget"
+FloatGui.ResetOnSpawn = false
+FloatGui.Parent = CoreGui
+
+local FloatBtn = Instance.new("TextButton")
+FloatBtn.Name = "FloatControlBtn"
+FloatBtn.Size = UDim2.new(0, 140, 0, 32)
+FloatBtn.Position = UDim2.new(0.02, 0, 0.2, 0)
+FloatBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+FloatBtn.Text = "🔴 REC: OFF [Normal]"
+FloatBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+FloatBtn.Font = Enum.Font.SourceSansBold
+FloatBtn.TextSize = 13
+FloatBtn.Active = true
+FloatBtn.Draggable = true
+FloatBtn.Parent = FloatGui
+
+local FloatCorner = Instance.new("UICorner")
+FloatCorner.CornerRadius = UDim.new(0, 8)
+FloatCorner.Parent = FloatBtn
+
+local FloatStroke = Instance.new("UIStroke")
+FloatStroke.Color = Color3.fromRGB(80, 80, 100)
+FloatStroke.Thickness = 1.5
+FloatStroke.Parent = FloatBtn
+
+local function UpdateFloatButtonUI()
+    if not Config.RemoteSpyActive then
+        FloatBtn.Text = "🔴 REC: OFF"
+        FloatBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+        FloatStroke.Color = Color3.fromRGB(80, 80, 100)
+    else
+        if Config.BlockRemoteServer then
+            FloatBtn.Text = "⛔ REC: ON [BLOCK]"
+            FloatBtn.BackgroundColor3 = Color3.fromRGB(160, 40, 40)
+            FloatStroke.Color = Color3.fromRGB(255, 100, 100)
+        else
+            FloatBtn.Text = "🟢 REC: ON [NORMAL]"
+            FloatBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
+            FloatStroke.Color = Color3.fromRGB(100, 255, 120)
+        end
+    end
+end
+
+-- กดปุ่มลอยเพื่อวนลูปโหมด: OFF -> ON (Normal) -> ON (Block) -> OFF
+FloatBtn.MouseButton1Click:Connect(function()
+    if not Config.RemoteSpyActive then
+        Config.RemoteSpyActive = true
+        Config.BlockRemoteServer = false
+    elseif Config.RemoteSpyActive and not Config.BlockRemoteServer then
+        Config.BlockRemoteServer = true
+    else
+        Config.RemoteSpyActive = false
+        Config.BlockRemoteServer = false
+    end
+    UpdateFloatButtonUI()
+end)
 
 --------------------------------------------------------------------------------
 -- RAYFIELD WINDOW INITIALIZATION
@@ -365,7 +423,7 @@ TabSearch:CreateButton({
 })
 
 --------------------------------------------------------------------------------
--- TAB 4: REMOTE SPY (STEALTH & ANTI-KICK HOOKING)
+-- TAB 4: REMOTE SPY (DUAL MODE: NORMAL & BLOCK)
 --------------------------------------------------------------------------------
 local TabSpy = Window:CreateTab(UI_TEXTS.TAB_SPY, 4483362458)
 
@@ -389,10 +447,21 @@ TabSpy:CreateToggle({
     Flag = "SpyToggle",
     Callback = function(Value)
         Config.RemoteSpyActive = Value
+        UpdateFloatButtonUI()
     end,
 })
 
--- 🛡️ STEALTH METAMETHOD HOOKING (หลบ Anti-Cheat Error 267)
+TabSpy:CreateToggle({
+    Name = UI_TEXTS.TOGGLE_BLOCK_MODE,
+    CurrentValue = false,
+    Flag = "BlockToggle",
+    Callback = function(Value)
+        Config.BlockRemoteServer = Value
+        UpdateFloatButtonUI()
+    end,
+})
+
+-- 🛡️ METAMETHOD HOOKING (DUAL MODE ENGINE)
 local checkcaller = checkcaller or function() return false end
 local newcclosure = newcclosure or function(f) return f end
 
@@ -427,9 +496,15 @@ if hookmetamethod and getrawmetatable then
                             if i < #args then formattedArgs = formattedArgs .. ", " end
                         end
 
-                        local logEntry = string.format("game.%s:%s(%s)\n", remotePath, method, formattedArgs)
+                        local modeTag = Config.BlockRemoteServer and "[BLOCKED]" or "[NORMAL]"
+                        local logEntry = string.format("%s game.%s:%s(%s)\n", modeTag, remotePath, method, formattedArgs)
                         table.insert(Config.LoggedRemotes, logEntry)
                     end)
+
+                    -- ถ้าเปิดโหมด Block จะคืนค่า nil ทันที (ไม่ส่งสัญญาณไปหาเกม)
+                    if Config.BlockRemoteServer then
+                        return nil
+                    end
                 end
             end
 
@@ -549,6 +624,6 @@ TabTools:CreateButton({
 
 Rayfield:Notify({
     Title = "Zenith Soul HUB Ready",
-    Content = "โหลดระบบเรียบร้อยพร้อมใช้งาน",
+    Content = "โหลดปุ่มลอย + ระบบ Dual Mode Remote Spy เรียบร้อย!",
     Duration = 3
 })
