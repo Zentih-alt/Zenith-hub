@@ -1,161 +1,137 @@
--- [[ ZENITH SOUL HUB - DYNAMIC FLOATING SPY ENGINE ]] --
--- Source: https://raw.githubusercontent.com/Zentih-alt/Zenith-hub/refs/heads/main/Zentih
--- Floating Widget shows ONLY when Remote Spy is active.
--- Mode 1: Block Mode (Intercept & Block) | Mode 2: Normal Mode (Record & Pass Through)
+-- [[ ZENITH SOUL HUB - ADVANCED SCRIPTMAKER EXTRACTOR ]] --
+-- UI Library: ZentihUI
+-- Host: https://raw.githubusercontent.com/Zentih-alt/Zentih-Soul-hub/refs/heads/main/ZentihUI.lua
 
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
 local CoreGui = game:GetService("CoreGui") or LocalPlayer:WaitForChild("PlayerGui")
 
--- โหลด Rayfield UI ปลอดภัยด้วย pcall
-local success, Rayfield = pcall(function()
-    return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+-- โหลด Zentih UI Library
+local LibraryUrl = "https://raw.githubusercontent.com/Zentih-alt/Zentih-Soul-hub/refs/heads/main/ZentihUI.lua"
+local success, Zentih = pcall(function()
+    return loadstring(game:HttpGet(LibraryUrl))()
 end)
 
-if not success or not Rayfield then
-    warn("[Zenith Soul HUB] Failed to load Rayfield Library.")
+if not success or not Zentih then
+    warn("[Zenith Engine Error] Failed to load Zentih UI Library.")
     return
 end
 
 --------------------------------------------------------------------------------
--- 📝 UI TEXTS
+-- 1. การจัดการโฟลเดอร์
 --------------------------------------------------------------------------------
-local UI_TEXTS = {
-    WINDOW_TITLE = "Zenith  HUB ",
-    LOADING_TITLE = "Zenith Soul HUB",
-    LOADING_SUBTITLE = "Zentih dump",
+local FOLDER_NAME = "Zentih"
 
-    TAB_DUMP = "Target Dumper",
-    HEADER_DUMP_TITLE = "ดึงข้อมูลเซอร์วิสเจาะจง",
-    HEADER_DUMP_DESC = "เลือกเซอร์วิสเกมที่ต้องการ ระบบจะดึงโครงสร้างและข้อมูลทั้งหมดออกมาให้เลย | แบบนี้ดีกว่า Valen Hub นะ",
-    LABEL_SERVICE_SELECT = "เลือกเซอร์วิสเป้าหมาย",
-    LABEL_DUMP_FILENAME = "ตั้งชื่อไฟล์บันทึก",
-    PLACEHOLDER_DUMP_FILENAME = "ชื่อไฟล์ตัวอย่าง",
-    BTN_DUMP_ALL = "ดึงข้อมูลเซอร์วิสที่เลือก",
-    BTN_DUMP_ESSENTIAL = "ดึงแค่ข้อมูลสำคัญ (สคริปต์ NPC ค่าต่างๆ)",
-
-    TAB_HIDDEN = "Hidden Assets",
-    HEADER_HIDDEN_TITLE = "แสกนหาข้อมูลที่ซ่อนอยู่",
-    HEADER_HIDDEN_DESC = "ส่องลึกเข้าไปในหน่วยความจำ เก็บของซ่อน ไนล์ หรือออปเจ็คที่เกมปกบังเอาไว้",
-    LABEL_HIDDEN_FILENAME = "ตั้งชื่อไฟล์บันทึก",
-    PLACEHOLDER_HIDDEN_FILENAME = "ข้อมูลที่ซ่อนอยู่",
-    BTN_HIDDEN_EXTRACT = "เริ่มแสกน + ดึงของที่ซ่อนออกมา",
-
-    TAB_SEARCH = "Keyword Search",
-    HEADER_SEARCH_TITLE = "ค้นหาแบบเจาะจงด้วยคำสำคัญ",
-    HEADER_SEARCH_DESC = "พิมพ์คำที่อยากหา ระบบจะค้นให้ทั่วทุกมุมเกม ไม่พลาดแม้แต่จุดเล็กๆ",
-    LABEL_SEARCH_LOCATION = "เลือกพื้นที่ที่จะให้ค้น",
-    LABEL_SEARCH_KEYWORD = "พิมพ์คำที่อยากหา",
-    PLACEHOLDER_SEARCH_KEYWORD = "เควส อาวุธ บอส ชื่ออะไรก็ได้",
-    LABEL_SEARCH_FILENAME = "ตั้งชื่อไฟล์บันทึก",
-    PLACEHOLDER_SEARCH_FILENAME = "ผลลัพธ์การค้นหา",
-    BTN_SEARCH_EXECUTE = "เริ่มค้นหาเลย",
-
-    TAB_SPY = "Remote Spy",
-    HEADER_SPY_TITLE = "บันทึกทุกการเรียกใช้รีโมท (Dual Mode)",
-    HEADER_SPY_DESC = "แอบดู + เก็บล็อก RemoteEvent/Function มีปุ่มลอยควบคุมหน้าจอเมื่อเปิดใช้งาน",
-    LABEL_SPY_FILENAME = "ตั้งชื่อไฟล์บันทึก",
-    PLACEHOLDER_SPY_FILENAME = "ล็อกรีโมททั้งหมด",
-    TOGGLE_SPY_ENABLE = "เปิดใช้งาน Remote Spy",
-    TOGGLE_BLOCK_MODE = "ใช้แบบที่ 1: บล็อก Remote (Block Mode)",
-    BTN_SPY_SAVE = "บันทึกล็อกที่เก็บไว้",
-    BTN_SPY_CLEAR = "ล้างล็อกทั้งหมดเริ่มใหม่",
-
-    TAB_DECOMP = "Decompiler",
-    HEADER_DECOMP_TITLE = "แปลงสคริปต์กลับมาเป็นโค้ดอ่านได้",
-    HEADER_DECOMP_DESC = "ดึงสคริปต์ฝั่งไคลเอ็นต์ทั้งหมดออกมา แปลงเป็นโค้ด Lua ที่อ่านเข้าใจง่าย ไม่ยุ่งยาก",
-    LABEL_DECOMP_FILENAME = "ตั้งชื่อไฟล์บันทึก",
-    PLACEHOLDER_DECOMP_FILENAME = "ซอร์สโค้ดที่แปลงแล้ว",
-    BTN_DECOMP_START = "เริ่มแปลงสคริปต์ไคลเอ็นต์ทั้งหมด",
-
-    TAB_TOOLS = "Dev Tools",
-    HEADER_TOOLS_TITLE = "รวมเครื่องมือสายสคริปเตอร์",
-    HEADER_TOOLS_DESC = "รันเครื่องมือเจาะระบบยอดฮิต (Dex, SimpleSpy) ได้โดยตรงจากที่นี่",
-    BTN_RUN_DEX = "เปิด Dex Explorer v3",
-    BTN_RUN_SIMPLESPY = "เปิด SimpleSpy v2",
-    BTN_RUN_TURTLESPY = "เปิด Turtle Spy",
-    BTN_RUN_IY = "เปิด Infinite Yield",
-
-    SUBFOLDER_NAME = "Zentih"
-}
-
---------------------------------------------------------------------------------
--- 📁 สร้างโฟลเดอร์ Zentih
---------------------------------------------------------------------------------
 if makefolder then
     pcall(function()
-        if not isfolder(UI_TEXTS.SUBFOLDER_NAME) then
-            makefolder(UI_TEXTS.SUBFOLDER_NAME)
+        if not isfolder(FOLDER_NAME) then
+            makefolder(FOLDER_NAME)
         end
     end)
 end
 
---------------------------------------------------------------------------------
--- Config & Variables
---------------------------------------------------------------------------------
 local Config = {
     MainFilename = "Game_ScriptDump",
-    SearchFilename = "SearchResult",
-    RemoteFilename = "RemoteLogs",
-    DecompileFilename = "SourceCode",
+    SearchFilename = "Search_Result",
+    RemoteFilename = "RemoteSpy_Logs",
+    DecompileFilename = "Decompiled_Source",
+    TargetService = "ReplicatedStorage",
     SearchLocation = "Workspace",
     SearchKeyword = "",
     RemoteSpyActive = false,
-    BlockRemoteServer = false, -- false = แบบที่ 2 (Normal), true = แบบที่ 1 (Block)
+    BlockRemoteServer = false,
     LoggedRemotes = {}
 }
 
 --------------------------------------------------------------------------------
--- ⚡ Smart File Saver
+-- 2. ระบบบันทึกไฟล์ (Smart Saver)
 --------------------------------------------------------------------------------
-local function SaveFileToRootFolder(baseFilename, dataTable)
-    if not string.match(baseFilename, "%.txt$") and not string.match(baseFilename, "%.lua$") then
-        baseFilename = baseFilename .. ".txt"
+local function SaveFile(filename, contentTable, windowInstance)
+    if not string.match(filename, "%.txt$") and not string.match(filename, "%.lua$") then
+        filename = filename .. ".txt"
     end
 
-    local path = UI_TEXTS.SUBFOLDER_NAME .. "/" .. baseFilename
+    local path = FOLDER_NAME .. "/" .. filename
 
     if writefile then
-        pcall(function()
-            writefile(path, table.concat(dataTable))
+        local writeSuccess = pcall(function()
+            writefile(path, table.concat(contentTable))
         end)
 
-        Rayfield:Notify({
-            Title = "Zenith Soul HUB",
-            Content = "บันทึกไฟล์ไปที่ " .. path .. " เรียบร้อย!",
-            Duration = 3,
-            Image = 4483362458
-        })
+        if writeSuccess and windowInstance then
+            windowInstance:Notify({
+                Title = "System Notification",
+                Content = "Saved: " .. path,
+                Duration = 3
+            })
+        end
     end
 end
 
 --------------------------------------------------------------------------------
--- 🎯 Filter Function
+-- 3. ระบบวิเคราะห์ปุ่มและรีโมทเชิงลึก (Deep Asset & Remote Linker)
 --------------------------------------------------------------------------------
-local function IsEssentialData(item)
+local function AnalyzeAssetDetails(item)
     local className = item.ClassName
+    local details = ""
 
+    -- 1. Remote Signals
     if className == "RemoteEvent" or className == "RemoteFunction" or className == "BindableEvent" or className == "BindableFunction" then
-        return true, "REMOTE"
-    elseif className == "LocalScript" or className == "ModuleScript" or className == "Script" then
-        return true, "SCRIPT"
+        return true, "REMOTE", "Path: game." .. item:GetFullName()
+
+    -- 2. Interactive Buttons (ปุ่มกดหน้าจอ)
+    elseif item:IsA("TextButton") or item:IsA("ImageButton") then
+        local buttonText = item:IsA("TextButton") and item.Text or item.Name
+        local boundRemotes = {}
+
+        -- ค้นหา RemoteEvent หรือ LocalScript ที่ซ่อนอยู่ใต้ปุ่ม
+        for _, child in ipairs(item:GetDescendants()) do
+            if child:IsA("RemoteEvent") or child:IsA("RemoteFunction") then
+                table.insert(boundRemotes, child:GetFullName())
+            end
+        end
+
+        details = "Label: '" .. tostring(buttonText) .. "'"
+        if #boundRemotes > 0 then
+            details = details .. " | Linked Remotes: [" .. table.concat(boundRemotes, ", ") .. "]"
+        end
+        return true, "UI_BUTTON", details
+
+    -- 3. Prompts & Triggers (ปุ่มกด E / จุดแตะ)
+    elseif className == "ProximityPrompt" then
+        details = string.format("Action: '%s', Object: '%s', Duration: %.1fs", item.ActionText, item.ObjectText, item.HoldDuration)
+        return true, "INTERACTION", details
+    elseif className == "TouchInterest" or className == "TouchTransmitter" then
+        local parentName = item.Parent and item.Parent.Name or "Unknown"
+        return true, "TOUCH_ZONE", "Trigger Part: " .. parentName
+
+    -- 4. Value Data
     elseif item:IsA("ValueBase") then
-        return true, "VALUE"
-    elseif className == "ProximityPrompt" or className == "ClickDetector" or className == "TouchInterest" or className == "TouchTransmitter" then
-        return true, "INTERACTION"
-    elseif item:IsA("Tool") or className == "Humanoid" then
-        return true, "GAMEPLAY"
-    elseif item:IsA("TextButton") or item:IsA("ImageButton") or item:IsA("TextBox") or item:IsA("ScreenGui") then
-        return true, "UI"
-    elseif className == "Folder" or className == "Model" or className == "Configuration" then
-        return true, "CONTAINER"
+        return true, "VALUE", "Value: " .. tostring(item.Value)
+
+    -- 5. Scripts & Modules
+    elseif className == "LocalScript" or className == "ModuleScript" or className == "Script" then
+        return true, "SCRIPT", "Type: " .. className
+
+    -- 6. Tools & NPCs
+    elseif item:IsA("Tool") then
+        return true, "TOOL", "Tool Name: " .. item.Name
+    elseif className == "Humanoid" and item.Parent then
+        local root = item.Parent:FindFirstChild("HumanoidRootPart")
+        if root then
+            local pos = root.Position
+            details = string.format("NPC Position: Vector3.new(%.1f, %.1f, %.1f)", pos.X, pos.Y, pos.Z)
+        else
+            details = "Entity: " .. item.Parent.Name
+        end
+        return true, "NPC", details
     end
 
-    return false, nil
+    return false, nil, nil
 end
 
 --------------------------------------------------------------------------------
--- 🔘 FLOATING WIDGET (แสดงเฉพาะเวลากดเปิดอัด Remote)
+-- 4. ปุ่มลอยควบคุม Remote Spy (Floating Widget)
 --------------------------------------------------------------------------------
 local FloatGui = Instance.new("ScreenGui")
 FloatGui.Name = "ZenithFloatingWidget"
@@ -164,233 +140,255 @@ FloatGui.Parent = CoreGui
 
 local FloatBtn = Instance.new("TextButton")
 FloatBtn.Name = "FloatControlBtn"
-FloatBtn.Size = UDim2.new(0, 160, 0, 34)
+FloatBtn.Size = UDim2.new(0, 150, 0, 32)
 FloatBtn.Position = UDim2.new(0.02, 0, 0.25, 0)
-FloatBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-FloatBtn.Text = "🔴 REC: OFF"
-FloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-FloatBtn.Font = Enum.Font.SourceSansBold
-FloatBtn.TextSize = 13
-FloatBtn.Visible = false -- ซ่อนปุ่มลอยไว้เป็นค่าเริ่มต้น
+FloatBtn.BackgroundColor3 = Color3.fromRGB(25, 29, 39)
+FloatBtn.Text = "REC: OFF"
+FloatBtn.TextColor3 = Color3.fromRGB(238, 239, 243)
+FloatBtn.Font = Enum.Font.GothamBold
+FloatBtn.TextSize = 12
+FloatBtn.Visible = false
 FloatBtn.Active = true
 FloatBtn.Draggable = true
 FloatBtn.Parent = FloatGui
 
 local FloatCorner = Instance.new("UICorner")
-FloatCorner.CornerRadius = UDim.new(0, 8)
+FloatCorner.CornerRadius = UDim.new(0, 6)
 FloatCorner.Parent = FloatBtn
 
 local FloatStroke = Instance.new("UIStroke")
-FloatStroke.Color = Color3.fromRGB(80, 80, 100)
-FloatStroke.Thickness = 1.5
+FloatStroke.Color = Color3.fromRGB(64, 132, 245)
+FloatStroke.Thickness = 1
 FloatStroke.Parent = FloatBtn
 
 local function UpdateFloatButtonUI()
     if not Config.RemoteSpyActive then
-        FloatBtn.Visible = false -- ซ่อนปุ่มเมื่อปิดอัด
+        FloatBtn.Visible = false
     else
-        FloatBtn.Visible = true -- แสดงปุ่มเมื่อเปิดอัด
+        FloatBtn.Visible = true
         if Config.BlockRemoteServer then
-            FloatBtn.Text = "⛔ แบบที่ 1: [ Block ]"
-            FloatBtn.BackgroundColor3 = Color3.fromRGB(160, 40, 40)
-            FloatStroke.Color = Color3.fromRGB(255, 100, 100)
+            FloatBtn.Text = "SPY: MODE 1 (BLOCK)"
+            FloatBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+            FloatStroke.Color = Color3.fromRGB(224, 92, 92)
         else
-            FloatBtn.Text = "🟢 แบบที่ 2: [ Normal ]"
-            FloatBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 60)
-            FloatStroke.Color = Color3.fromRGB(100, 255, 120)
+            FloatBtn.Text = "SPY: MODE 2 (NORMAL)"
+            FloatBtn.BackgroundColor3 = Color3.fromRGB(40, 140, 70)
+            FloatStroke.Color = Color3.fromRGB(72, 187, 120)
         end
     end
 end
 
--- กดปุ่มลอยบนหน้าจอเพื่อสลับโหมด 1 (Block) <-> โหมด 2 (Normal)
 FloatBtn.MouseButton1Click:Connect(function()
     Config.BlockRemoteServer = not Config.BlockRemoteServer
     UpdateFloatButtonUI()
 end)
 
 --------------------------------------------------------------------------------
--- RAYFIELD WINDOW INITIALIZATION
+-- 5. สร้างหน้าต่าง GUI หลัก (Zentih Window)
 --------------------------------------------------------------------------------
-local Window = Rayfield:CreateWindow({
-    Name = UI_TEXTS.WINDOW_TITLE,
-    LoadingTitle = UI_TEXTS.LOADING_TITLE,
-    LoadingSubtitle = UI_TEXTS.LOADING_SUBTITLE,
-    ConfigurationSaving = { Enabled = false },
-    Discord = { Enabled = false },
-    KeySystem = false
+local Window = Zentih:CreateWindow({
+    Title = "Zenith Soul HUB",
+    Subtitle = "Scriptmaker Data Engine",
+    ConfigFolder = "Zentih"
 })
 
 --------------------------------------------------------------------------------
--- TAB 1: MAIN EXTRACTOR
+-- TAB 1: TARGET DUMPER (ดัมพ์โครงสร้างทำสคริปต์)
 --------------------------------------------------------------------------------
-local TabMain = Window:CreateTab(UI_TEXTS.TAB_DUMP, 4483362458)
+local TabDump = Window:CreateTab({ Name = "Target Dumper", Icon = "dungeon" })
 
-TabMain:CreateParagraph({
-    Title = UI_TEXTS.HEADER_DUMP_TITLE,
-    Content = UI_TEXTS.HEADER_DUMP_DESC
+TabDump:CreateSection("Scriptmaker Target Dumper")
+TabDump:CreateParagraph({
+    Title = "Description",
+    Content = "Extracts Remotes, Buttons, Prompts, Scripts, and Values formatted cleanly for AI/Script development."
 })
 
-TabMain:CreateDropdown({
-    Name = UI_TEXTS.LABEL_SERVICE_SELECT,
+TabDump:CreateDropdown({
+    Title = "Select Service Target",
     Options = {"ReplicatedStorage", "Workspace", "StarterGui", "StarterPack", "Lighting", "Players", "All"},
-    CurrentOption = {"ReplicatedStorage"},
-    MultipleOptions = false,
-    Flag = "DumpServiceDropdown",
-    Callback = function(Options)
-        Config.SearchLocation = Options[1]
-    end,
+    Default = "ReplicatedStorage",
+    Flag = "DumpTargetService",
+    Callback = function(selected)
+        Config.TargetService = selected
+    end
 })
 
-TabMain:CreateInput({
-    Name = UI_TEXTS.LABEL_DUMP_FILENAME,
-    PlaceholderText = UI_TEXTS.PLACEHOLDER_DUMP_FILENAME,
-    RemoveTextOnFocus = false,
-    Callback = function(Text)
-        if Text and Text ~= "" then Config.MainFilename = Text end
-    end,
+TabDump:CreateInput({
+    Title = "Filename",
+    Placeholder = "Enter filename...",
+    Default = "Game_ScriptDump",
+    Flag = "DumpFilename",
+    Callback = function(text)
+        if text and text ~= "" then Config.MainFilename = text end
+    end
 })
 
-TabMain:CreateButton({
-    Name = UI_TEXTS.BTN_DUMP_ALL,
+TabDump:CreateButton({
+    Title = "Extract Clean Scripting Data",
     Callback = function()
         task.spawn(function()
             local buffer = {}
-            table.insert(buffer, "=== ZENITH SOUL HUB : CLEAN DEX DUMP FOR AI ===\n")
-            table.insert(buffer, "Place ID : " .. tostring(game.PlaceId) .. "\n\n")
+            table.insert(buffer, "==================================================\n")
+            table.insert(buffer, "=== ZENITH SOUL HUB : CLEAN SCRIPTING DUMP ===\n")
+            table.insert(buffer, "==================================================\n")
+            table.insert(buffer, "Place ID : " .. tostring(game.PlaceId) .. "\n")
+            table.insert(buffer, "Date     : " .. os.date("%Y-%m-%d %X") .. "\n\n")
 
             local services = {}
-            if Config.SearchLocation == "All" then
+            if Config.TargetService == "All" then
                 services = {game.ReplicatedStorage, game.Workspace, game.StarterGui, game.StarterPack, game.Players}
             else
-                local targetServ = game:GetService(Config.SearchLocation)
+                local targetServ = game:GetService(Config.TargetService)
                 if targetServ then table.insert(services, targetServ) end
             end
 
-            local count = 0
+            local categories = {
+                REMOTE = {},
+                UI_BUTTON = {},
+                INTERACTION = {},
+                SCRIPT = {},
+                VALUE = {},
+                GAMEPLAY = {}
+            }
+
             for _, serv in ipairs(services) do
                 if serv then
-                    table.insert(buffer, "[" .. string.upper(serv.Name) .. "]\n")
-                    local items = serv:GetDescendants()
-                    for i = 1, #items do
-                        local item = items[i]
-                        local isEss, cat = IsEssentialData(item)
-                        if isEss then
-                            count = count + 1
-                            local extraInfo = ""
-                            if cat == "VALUE" then
-                                extraInfo = " = " .. tostring(item.Value)
-                            elseif cat == "INTERACTION" and item:IsA("ProximityPrompt") then
-                                extraInfo = string.format(" [Action: '%s', Object: '%s']", item.ActionText, item.ObjectText)
+                    local descendants = serv:GetDescendants()
+                    for i = 1, #descendants do
+                        local item = descendants[i]
+                        local isTarget, category, details = AnalyzeAssetDetails(item)
+
+                        if isTarget then
+                            local line = string.format("game.%s (%s)", item:GetFullName(), item.ClassName)
+                            if details and details ~= "" then
+                                line = line .. " | " .. details
                             end
-                            table.insert(buffer, string.format("%s (%s)%s\n", item:GetFullName(), item.ClassName, extraInfo))
+
+                            if categories[category] then
+                                table.insert(categories[category], line)
+                            else
+                                table.insert(categories.GAMEPLAY, line)
+                            end
                         end
                         if i % 1000 == 0 then task.wait() end
+                    end
+                end
+            end
+
+            -- เขียนลงไฟล์แยกตามหมวดหมู่อย่างเป็นระเบียบ
+            for catName, items in pairs(categories) do
+                if #items > 0 then
+                    table.insert(buffer, "--- [" .. catName .. " SAMPLES] (" .. #items .. " Items) ---\n")
+                    for _, entry in ipairs(items) do
+                        table.insert(buffer, entry .. "\n")
                     end
                     table.insert(buffer, "\n")
                 end
             end
-            table.insert(buffer, "Total Items Extracted: " .. count .. "\n")
-            SaveFileToRootFolder(Config.MainFilename, buffer)
+
+            SaveFile(Config.MainFilename, buffer, Window)
         end)
-    end,
+    end
 })
 
 --------------------------------------------------------------------------------
 -- TAB 2: HIDDEN ASSETS
 --------------------------------------------------------------------------------
-local TabHidden = Window:CreateTab(UI_TEXTS.TAB_HIDDEN, 4483362458)
+local TabHidden = Window:CreateTab({ Name = "Hidden Assets", Icon = "eye" })
 
-TabHidden:CreateParagraph({
-    Title = UI_TEXTS.HEADER_HIDDEN_TITLE,
-    Content = UI_TEXTS.HEADER_HIDDEN_DESC
-})
+TabHidden:CreateSection("Memory Nil Asset Search")
 
 TabHidden:CreateInput({
-    Name = UI_TEXTS.LABEL_HIDDEN_FILENAME,
-    PlaceholderText = UI_TEXTS.PLACEHOLDER_HIDDEN_FILENAME,
-    RemoveTextOnFocus = false,
-    Callback = function(Text)
-        if Text and Text ~= "" then Config.SearchFilename = Text end
-    end,
+    Title = "Filename",
+    Placeholder = "Enter filename...",
+    Default = "Hidden_MemoryDump",
+    Flag = "HiddenFilename",
+    Callback = function(text)
+        if text and text ~= "" then Config.SearchFilename = text end
+    end
 })
 
 TabHidden:CreateButton({
-    Name = UI_TEXTS.BTN_HIDDEN_EXTRACT,
+    Title = "Scan Memory & Extract Hidden Assets",
     Callback = function()
         task.spawn(function()
             local nilFunc = getnilinstances or get_nil_instances
-            if not nilFunc then return end
+            if not nilFunc then
+                Window:Notify({ Title = "Not Supported", Content = "Your executor does not support getnilinstances", Duration = 3 })
+                return
+            end
 
             local nilList = nilFunc()
             local buffer = {}
-            table.insert(buffer, "=== ZENITH SOUL HUB : HIDDEN & NIL ASSETS ===\n\n")
+            table.insert(buffer, "=== ZENITH SOUL HUB : HIDDEN MEMORY ASSETS ===\n\n")
 
             local count = 0
             for i = 1, #nilList do
                 local item = nilList[i]
                 pcall(function()
                     if typeof(item) == "Instance" then
-                        local isEss, cat = IsEssentialData(item)
-                        if isEss then
+                        local isTarget, category, details = AnalyzeAssetDetails(item)
+                        if isTarget then
                             count = count + 1
-                            table.insert(buffer, string.format("%s (%s) [NIL MEMORY]\n", item.Name, item.ClassName))
+                            table.insert(buffer, string.format("[%s] %s (%s)\n", category, item.Name, item.ClassName))
                         end
                     end
                 end)
             end
-            table.insert(buffer, "\nTotal Hidden Elements: " .. count)
-            SaveFileToRootFolder(Config.SearchFilename .. "_Hidden", buffer)
+            table.insert(buffer, "\nTotal Hidden Elements Found: " .. count)
+            SaveFile(Config.SearchFilename .. "_Hidden", buffer, Window)
         end)
-    end,
+    end
 })
 
 --------------------------------------------------------------------------------
--- TAB 3: SPECIFIC SEARCH
+-- TAB 3: KEYWORD SEARCH
 --------------------------------------------------------------------------------
-local TabSearch = Window:CreateTab(UI_TEXTS.TAB_SEARCH, 4483362458)
+local TabSearch = Window:CreateTab({ Name = "Keyword Search", Icon = "input" })
 
-TabSearch:CreateParagraph({
-    Title = UI_TEXTS.HEADER_SEARCH_TITLE,
-    Content = UI_TEXTS.HEADER_SEARCH_DESC
-})
+TabSearch:CreateSection("Targeted Keyword Search")
 
 TabSearch:CreateDropdown({
-    Name = UI_TEXTS.LABEL_SEARCH_LOCATION,
+    Title = "Search Location",
     Options = {"All", "Workspace", "ReplicatedStorage", "StarterGui", "Players"},
-    CurrentOption = {"Workspace"},
-    MultipleOptions = false,
-    Flag = "SearchDropdown",
-    Callback = function(Options)
-        Config.SearchLocation = Options[1]
-    end,
+    Default = "Workspace",
+    Flag = "SearchLocation",
+    Callback = function(selected)
+        Config.SearchLocation = selected
+    end
 })
 
 TabSearch:CreateInput({
-    Name = UI_TEXTS.LABEL_SEARCH_KEYWORD,
-    PlaceholderText = UI_TEXTS.PLACEHOLDER_SEARCH_KEYWORD,
-    RemoveTextOnFocus = false,
-    Callback = function(Text)
-        if Text then Config.SearchKeyword = string.lower(Text) end
-    end,
+    Title = "Target Keyword",
+    Placeholder = "e.g., Quest, Boss, Select, Remote",
+    Default = "",
+    Flag = "SearchKeyword",
+    Callback = function(text)
+        if text then Config.SearchKeyword = string.lower(text) end
+    end
 })
 
 TabSearch:CreateInput({
-    Name = UI_TEXTS.LABEL_SEARCH_FILENAME,
-    PlaceholderText = UI_TEXTS.PLACEHOLDER_SEARCH_FILENAME,
-    RemoveTextOnFocus = false,
-    Callback = function(Text)
-        if Text and Text ~= "" then Config.SearchFilename = Text end
-    end,
+    Title = "Filename",
+    Placeholder = "Enter filename...",
+    Default = "Search_Result",
+    Flag = "SearchFilenameInput",
+    Callback = function(text)
+        if text and text ~= "" then Config.SearchFilename = text end
+    end
 })
 
 TabSearch:CreateButton({
-    Name = UI_TEXTS.BTN_SEARCH_EXECUTE,
+    Title = "Execute Keyword Search",
     Callback = function()
-        if Config.SearchKeyword == "" then return end
+        if Config.SearchKeyword == "" then
+            Window:Notify({ Title = "Warning", Content = "Please enter a search keyword first.", Duration = 3 })
+            return
+        end
 
         task.spawn(function()
             local buffer = {}
-            table.insert(buffer, "=== ZENITH SOUL HUB : SEARCH RESULTS ===\n")
+            table.insert(buffer, "=== ZENITH SOUL HUB : KEYWORD SEARCH ===\n")
             table.insert(buffer, "Keyword  : '" .. Config.SearchKeyword .. "'\n\n")
 
             local target = game
@@ -405,56 +403,54 @@ TabSearch:CreateButton({
                 local item = items[i]
                 if string.find(string.lower(item.Name), Config.SearchKeyword) then
                     count = count + 1
-                    table.insert(buffer, string.format("%s (%s)\n", item:GetFullName(), item.ClassName))
+                    table.insert(buffer, string.format("game.%s (%s)\n", item:GetFullName(), item.ClassName))
                 end
             end
 
-            table.insert(buffer, "\nTotal Matches: " .. count)
-            SaveFileToRootFolder(Config.SearchFilename, buffer)
+            table.insert(buffer, "\nTotal Matches Found: " .. count)
+            SaveFile(Config.SearchFilename, buffer, Window)
         end)
-    end,
+    end
 })
 
 --------------------------------------------------------------------------------
--- TAB 4: REMOTE SPY (DUAL MODE: MODE 1 BLOCK & MODE 2 NORMAL)
+-- TAB 4: REMOTE SPY (DUAL MODE)
 --------------------------------------------------------------------------------
-local TabSpy = Window:CreateTab(UI_TEXTS.TAB_SPY, 4483362458)
+local TabSpy = Window:CreateTab({ Name = "Remote Spy", Icon = "status" })
 
-TabSpy:CreateParagraph({
-    Title = UI_TEXTS.HEADER_SPY_TITLE,
-    Content = UI_TEXTS.HEADER_SPY_DESC
-})
+TabSpy:CreateSection("Network Action Logger")
 
 TabSpy:CreateInput({
-    Name = UI_TEXTS.LABEL_SPY_FILENAME,
-    PlaceholderText = UI_TEXTS.PLACEHOLDER_SPY_FILENAME,
-    RemoveTextOnFocus = false,
-    Callback = function(Text)
-        if Text and Text ~= "" then Config.RemoteFilename = Text end
-    end,
+    Title = "Filename",
+    Placeholder = "Enter filename...",
+    Default = "RemoteSpy_Logs",
+    Flag = "SpyFilename",
+    Callback = function(text)
+        if text and text ~= "" then Config.RemoteFilename = text end
+    end
 })
 
 TabSpy:CreateToggle({
-    Name = UI_TEXTS.TOGGLE_SPY_ENABLE,
-    CurrentValue = false,
-    Flag = "SpyToggle",
-    Callback = function(Value)
-        Config.RemoteSpyActive = Value
+    Title = "Enable Remote Spy",
+    Default = false,
+    Flag = "EnableRemoteSpyToggle",
+    Callback = function(state)
+        Config.RemoteSpyActive = state
         UpdateFloatButtonUI()
-    end,
+    end
 })
 
 TabSpy:CreateToggle({
-    Name = UI_TEXTS.TOGGLE_BLOCK_MODE,
-    CurrentValue = false,
-    Flag = "BlockToggle",
-    Callback = function(Value)
-        Config.BlockRemoteServer = Value
+    Title = "Mode 1: Block Remote Transmission",
+    Default = false,
+    Flag = "BlockRemoteToggle",
+    Callback = function(state)
+        Config.BlockRemoteServer = state
         UpdateFloatButtonUI()
-    end,
+    end
 })
 
--- 🛡️ STEALTH METAMETHOD HOOKING
+-- Metamethod Hooking
 local checkcaller = checkcaller or function() return false end
 local newcclosure = newcclosure or function(f) return f end
 
@@ -474,34 +470,35 @@ if hookmetamethod and getrawmetatable then
                 if method == "FireServer" or method == "InvokeServer" then
                     pcall(function()
                         local remotePath = self:GetFullName()
-                        local formattedArgs = ""
+                        local formattedArgs = {}
+
                         for i = 1, #args do
                             local arg = args[i]
-                            if type(arg) == "table" then
-                                formattedArgs = formattedArgs .. "{Table}"
+                            if type(arg) == "string" then
+                                table.insert(formattedArgs, '"' .. tostring(arg) .. '"')
                             elseif typeof(arg) == "Instance" then
-                                formattedArgs = formattedArgs .. "Instance(" .. arg:GetFullName() .. ")"
-                            elseif type(arg) == "string" then
-                                formattedArgs = formattedArgs .. "'" .. tostring(arg) .. "'"
+                                table.insert(formattedArgs, "game." .. arg:GetFullName())
+                            elseif type(arg) == "table" then
+                                table.insert(formattedArgs, "{...}")
                             else
-                                formattedArgs = formattedArgs .. tostring(arg)
+                                table.insert(formattedArgs, tostring(arg))
                             end
-                            if i < #args then formattedArgs = formattedArgs .. ", " end
                         end
 
+                        local argString = table.concat(formattedArgs, ", ")
                         local modeTag = Config.BlockRemoteServer and "[MODE 1: BLOCK]" or "[MODE 2: NORMAL]"
-                        local logEntry = string.format("%s game.%s:%s(%s)\n", modeTag, remotePath, method, formattedArgs)
+                        
+                        -- บันทึกเป็นรูปแบบคำสั่ง Lua ที่นำไปก๊อปปี้รันได้เลย
+                        local logEntry = string.format("%s game.%s:%s(%s)\n", modeTag, remotePath, method, argString)
                         table.insert(Config.LoggedRemotes, logEntry)
                     end)
 
-                    -- แบบที่ 1 (อันเก่า): บล็อก Remote ไม่ให้ส่งไปทางเกม
                     if Config.BlockRemoteServer then
                         return nil
                     end
                 end
             end
 
-            -- แบบที่ 2 (อันใหม่): เล่นได้ตามปกติและส่ง Remote ไปหาเกมปกติ
             return oldNamecall(self, ...)
         end))
 
@@ -510,114 +507,115 @@ if hookmetamethod and getrawmetatable then
 end
 
 TabSpy:CreateButton({
-    Name = UI_TEXTS.BTN_SPY_SAVE,
+    Title = "Save Recorded Remote Logs",
     Callback = function()
-        if #Config.LoggedRemotes == 0 then return end
+        if #Config.LoggedRemotes == 0 then
+            Window:Notify({ Title = "Warning", Content = "No logged remotes to save.", Duration = 3 })
+            return
+        end
         local buffer = {}
-        table.insert(buffer, "=== ZENITH SOUL HUB : REMOTE LOGS ===\n\n")
+        table.insert(buffer, "=== ZENITH SOUL HUB : EXECUTABLE REMOTE LOGS ===\n\n")
         for _, log in ipairs(Config.LoggedRemotes) do
             table.insert(buffer, log)
         end
-        SaveFileToRootFolder(Config.RemoteFilename, buffer)
-    end,
+        SaveFile(Config.RemoteFilename, buffer, Window)
+    end
 })
 
 TabSpy:CreateButton({
-    Name = UI_TEXTS.BTN_SPY_CLEAR,
+    Title = "Clear Logs Buffer",
     Callback = function()
         Config.LoggedRemotes = {}
-    end,
+        Window:Notify({ Title = "Success", Content = "Remote logs cleared.", Duration = 3 })
+    end
 })
 
 --------------------------------------------------------------------------------
 -- TAB 5: DECOMPILER
 --------------------------------------------------------------------------------
-local TabDecomp = Window:CreateTab(UI_TEXTS.TAB_DECOMP, 4483362458)
+local TabDecomp = Window:CreateTab({ Name = "Decompiler", Icon = "sword" })
 
-TabDecomp:CreateParagraph({
-    Title = UI_TEXTS.HEADER_DECOMP_TITLE,
-    Content = UI_TEXTS.HEADER_DECOMP_DESC
-})
+TabDecomp:CreateSection("Script Decompiler Engine")
 
 TabDecomp:CreateInput({
-    Name = UI_TEXTS.LABEL_DECOMP_FILENAME,
-    PlaceholderText = UI_TEXTS.PLACEHOLDER_DECOMP_FILENAME,
-    RemoveTextOnFocus = false,
-    Callback = function(Text)
-        if Text and Text ~= "" then Config.DecompileFilename = Text end
-    end,
+    Title = "Filename",
+    Placeholder = "Enter filename...",
+    Default = "Decompiled_Source",
+    Flag = "DecompFilename",
+    Callback = function(text)
+        if text and text ~= "" then Config.DecompileFilename = text end
+    end
 })
 
 TabDecomp:CreateButton({
-    Name = UI_TEXTS.BTN_DECOMP_START,
+    Title = "Execute Decompiler",
     Callback = function()
         task.spawn(function()
             local decomp = decompile or (syn and syn.decompile)
             local buffer = {}
-            table.insert(buffer, "-- [[ ZENITH SOUL HUB : DECOMPILED CODE ]] --\n\n")
+            table.insert(buffer, "-- [[ ZENITH SOUL HUB : DECOMPILED SOURCE CODE ]] --\n\n")
 
             local allItems = game:GetDescendants()
+            local count = 0
             for i = 1, #allItems do
                 local item = allItems[i]
                 if item:IsA("LocalScript") or item:IsA("ModuleScript") then
-                    table.insert(buffer, string.format("-- TYPE: %s | NAME: %s\n-- PATH: %s\n", item.ClassName, item.Name, item:GetFullName()))
+                    count = count + 1
+                    table.insert(buffer, string.format("-- [%d] TYPE: %s | NAME: %s\n-- PATH: game.%s\n", count, item.ClassName, item.Name, item:GetFullName()))
                     if decomp then
                         local successDecomp, source = pcall(function() return decomp(item) end)
                         if successDecomp and source and #source > 0 then
                             table.insert(buffer, "--------------------------------------------------\n" .. tostring(source) .. "\n--------------------------------------------------\n\n")
                         else
-                            table.insert(buffer, "-- [Protected]\n\n")
+                            table.insert(buffer, "-- [Protected / Failed to Decompile]\n\n")
                         end
                     else
-                        table.insert(buffer, "-- [Not Supported]\n\n")
+                        table.insert(buffer, "-- [Decompiler Not Supported by Executor]\n\n")
                     end
                 end
             end
-            SaveFileToRootFolder(Config.DecompileFilename .. ".lua", buffer)
+            SaveFile(Config.DecompileFilename .. ".lua", buffer, Window)
         end)
-    end,
+    end
 })
 
 --------------------------------------------------------------------------------
--- TAB 6: DEVELOPER TOOLS
+-- TAB 6: DEV TOOLS
 --------------------------------------------------------------------------------
-local TabTools = Window:CreateTab(UI_TEXTS.TAB_TOOLS, 4483362458)
+local TabTools = Window:CreateTab({ Name = "Dev Tools", Icon = "star" })
 
-TabTools:CreateParagraph({
-    Title = UI_TEXTS.HEADER_TOOLS_TITLE,
-    Content = UI_TEXTS.HEADER_TOOLS_DESC
-})
+TabTools:CreateSection("External Developer Tools")
 
 TabTools:CreateButton({
-    Name = UI_TEXTS.BTN_RUN_DEX,
+    Title = "Launch Dark Dex Explorer v3",
     Callback = function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/Babyhamsta/RBLX_Games/main/Universal/BypassedDarkDexV3.lua"))()
-    end,
+    end
 })
 
 TabTools:CreateButton({
-    Name = UI_TEXTS.BTN_RUN_SIMPLESPY,
+    Title = "Launch SimpleSpy v2",
     Callback = function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/ex-syl/SimpleSpy-V2/main/SimpleSpy.lua"))()
-    end,
+    end
 })
 
 TabTools:CreateButton({
-    Name = UI_TEXTS.BTN_RUN_TURTLESPY,
+    Title = "Launch Turtle Spy",
     Callback = function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/Turtle-Spy/Turtle-Spy/main/source.lua"))()
-    end,
+    end
 })
 
 TabTools:CreateButton({
-    Name = UI_TEXTS.BTN_RUN_IY,
+    Title = "Launch Infinite Yield",
     Callback = function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-    end,
+    end
 })
 
-Rayfield:Notify({
-    Title = "Zenith Soul HUB Ready",
-    Content = "โหลดระบบเรียบร้อยพร้อมใช้งาน",
+Window:Notify({
+    Title = "Zenith Soul HUB",
+    Content = "Engine updated & ready to dump.",
     Duration = 3
 })
