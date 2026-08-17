@@ -1,17 +1,16 @@
 --[[
     ================================================================
-    Zentih HUB - Universal Deep Game Dumper & Trace RemoteSpy (FULL)
+    Zentih HUB - Universal Deep Game Analyzer & Executable Trace
     ================================================================
     แบรนด์: Zentih HUB
-    วัตถุประสงค์: สแกน ดักจับ และเจาะหา Remotes/Objects เชิงลึกทุกแมพใน Roblox
+    วัตถุประสงค์: วิเคราะห์ ดักจับ และแปลงสัญญาณเครือข่ายเป็นชุดคำสั่งสคริปต์
     UI Engine: WindUI (Official Latest Release)
     โลโก้: rbxassetid://74773895938557
-    รองรับ: Delta Mobile, Potassium, Fluxus, Wave, Solara และตัวรันทุกชนิด
 ]]
 
 local ok, errMsg = pcall(function()
 
--- 1. โหลดไลบรารี WindUI เวอร์ชันล่าสุดตามคู่มือทางการ
+-- 1. โหลดไลบรารี WindUI
 local WindUI = loadstring(game:HttpGet(
     "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
 ))()
@@ -32,7 +31,7 @@ end
 
 -- 2. สร้างหน้าต่างหลัก Zentih HUB
 local Window = WindUI:CreateWindow({
-    Title   = "Zentih HUB | Universal Dumper & Deep Spy",
+    Title   = "Zentih HUB | Deep Analyzer Engine",
     Author  = "By Zentih Dev",
     Folder  = HubFolderName,
     Icon    = LogoAsset,
@@ -57,40 +56,40 @@ local Window = WindUI:CreateWindow({
     User       = { Enabled = false },
 })
 
--- 3. สถานะและการตั้งค่าระบบ (Global State - เปิดทุกส่วนเต็มรูปแบบ)
+-- 3. สถานะและการตั้งค่าระบบ (Global State)
 local Config = {
-    FileName = "ZentihDump_" .. tostring(game.PlaceId),
+    FileName = "ZentihAnalysis_" .. tostring(game.PlaceId),
     MaxDepth = 50,
-    UnlimitedDepth = true, -- สวิตช์ไม่จำกัดความลึกกิ่งไม้
+    UnlimitedDepth = true,
     TreeStyle = "Railway (├──)",
     FilterType = "ทั้งหมด (All Objects)",
     
-    -- สวิตช์เลือกพื้นที่ดัมพ์ (เปิดทุกพื้นที่เพื่อป้องกันไฟล์เล็กลง)
-    DumpWorkspace = true,
-    DumpReplicated = true,
-    DumpPlayers = true,
-    DumpLighting = true,
-    DumpStarterGui = true,
-    DumpReplicatedFirst = true,
-    DumpAttributes = true,
-    DumpNilInstances = true,
+    -- สวิตช์เลือกพื้นที่สแกนโครงสร้าง
+    ScanWorkspace = true,
+    ScanReplicated = true,
+    ScanPlayers = true,
+    ScanLighting = true,
+    ScanStarterGui = true,
+    ScanReplicatedFirst = true,
+    ScanAttributes = true,
+    ScanNilInstances = true,
     
-    -- สวิตช์เลือกหมวดหมู่ดึงข้อมูล
-    SwitchGameAssets = true, -- 1. เย็น (Folders & Models)
-    SwitchRemotes = true,    -- 2. รีโมท (Remotes & Events)
-    SwitchUI = true,         -- 3. ยูไอ (UI Buttons & Prompts)
+    -- สวิตช์เลือกหมวดหมู่ข้อมูล
+    SwitchGameAssets = true, -- 1. องค์ประกอบเกม (Folders & Models)
+    SwitchRemotes = true,    -- 2. เครือข่าย (Remotes & Events)
+    SwitchUI = true,         -- 3. ส่วนติดต่อผู้ใช้ (UI Elements & Prompts)
 
-    -- Remote Spy Engine State
-    RemoteSpyEnabled = false,
-    BlockRemoteServer = false, -- false = Normal Mode (เล่นปกติ 100%), true = Block Mode
-    RawTraceMode = true,      -- บันทึกแบบ Raw Script Format (local args = {...})
+    -- Network Trace State
+    NetworkTraceEnabled = false,
+    BlockNetworkServer = false, -- false = โหมดปกติ, true = โหมดระงับการส่ง
+    RawScriptFormat = true,     -- บันทึกเป็นชุดคำสั่ง (local args = {...})
     IgnoreMovement = true,
     IgnoreChat = true,
     IgnoreAnims = true,
     LogCallerScript = true,
     LogToConsole = false,
-    CapturedRemotes = {},
-    CapturedRemotePaths = {},
+    CapturedLogs = {},
+    CapturedPaths = {},
     TotalCalls = 0,
     
     -- UI Click Tracking
@@ -102,22 +101,22 @@ local Config = {
     AutoLoadFile = ""
 }
 
--- สแกนหากลุ่ม Services ที่ต้องการ Dump
+-- สแกนหากลุ่ม Services ที่ต้องการวิเคราะห์โครงสร้าง
 local function getSelectedServices()
     local services = {}
-    if Config.DumpWorkspace then table.insert(services, game:GetService("Workspace")) end
-    if Config.DumpReplicated then table.insert(services, game:GetService("ReplicatedStorage")) end
-    if Config.DumpStarterGui then table.insert(services, game:GetService("StarterGui")) end
-    if Config.DumpPlayers then table.insert(services, game:GetService("Players")) end
-    if Config.DumpLighting then table.insert(services, game:GetService("Lighting")) end
-    if Config.DumpReplicatedFirst then table.insert(services, game:GetService("ReplicatedFirst")) end
+    if Config.ScanWorkspace then table.insert(services, game:GetService("Workspace")) end
+    if Config.ScanReplicated then table.insert(services, game:GetService("ReplicatedStorage")) end
+    if Config.ScanStarterGui then table.insert(services, game:GetService("StarterGui")) end
+    if Config.ScanPlayers then table.insert(services, game:GetService("Players")) end
+    if Config.ScanLighting then table.insert(services, game:GetService("Lighting")) end
+    if Config.ScanReplicatedFirst then table.insert(services, game:GetService("ReplicatedFirst")) end
     return services
 end
 
--- ระบบ Smart File Saver (แยกไฟล์อัตโนมัติเมื่อขนาดเกิน 8.5MB)
+-- ระบบบันทึกไฟล์อัจฉริยะ (แบ่งไฟล์อัตโนมัติหากขนาดเกิน 8.5MB)
 local function SaveSmartFile(baseName, contentLines)
     local rawName = baseName:gsub("%.txt$", "")
-    local MAX_BYTES = 8.5 * 1024 * 1024 -- 8.5MB Safe Threshold
+    local MAX_BYTES = 8.5 * 1024 * 1024
     local part = 1
     local currentChunk = {}
     local currentSize = 0
@@ -145,19 +144,19 @@ local function SaveSmartFile(baseName, contentLines)
 end
 
 -- ==========================================================
--- 🎯 UI TRACKER ENGINE (ดักจับปุ่มกด UI)
+-- 🎯 UI INTERACTION TRACKER
 -- ==========================================================
 local function hookUIElement(inst)
     if inst:IsA("TextButton") or inst:IsA("ImageButton") then
         inst.MouseButton1Click:Connect(function()
-            if not Config.RemoteSpyEnabled then return end
+            if not Config.NetworkTraceEnabled then return end
             local btnText = inst:IsA("TextButton") and inst.Text or inst.Name
-            Config.LastClickedUI = string.format("[UI BUTTON CLICKED] Name: '%s' | Path: game.%s", btnText, inst:GetFullName())
+            Config.LastClickedUI = string.format("[UI ELEMENT CLICKED] Name: '%s' | Path: game.%s", btnText, inst:GetFullName())
             Config.LastClickTime = tick()
         end)
     elseif inst:IsA("ProximityPrompt") then
         inst.Triggered:Connect(function()
-            if not Config.RemoteSpyEnabled then return end
+            if not Config.NetworkTraceEnabled then return end
             Config.LastClickedUI = string.format("[PROXIMITY PROMPT] Object: '%s' | Action: '%s'", inst.ObjectText, inst.ActionText)
             Config.LastClickTime = tick()
         end)
@@ -173,12 +172,12 @@ pcall(function()
 end)
 
 -- ==========================================================
--- 🛠️ ENGINE 1: FULL DEEP TREE DUMPER (ดัมพ์แมพแบบไม่ตัดขยะ)
+-- 🛠️ ENGINE 1: STRUCTURE ANALYZER (ตัววิเคราะห์โครงสร้างเกม)
 -- ==========================================================
-local function generateTreeDump()
+local function generateStructureAnalysis()
     local lines = {
         "-- ========================================",
-        "-- ZENTIH HUB: FULL DEEP GAME DUMP DATA",
+        "-- ZENTIH HUB: GAME STRUCTURE ANALYSIS DATA",
         "-- Place ID: " .. tostring(game.PlaceId),
         "-- Date: " .. os.date("%Y-%m-%d %H:%M:%S"),
         "-- Format: " .. Config.TreeStyle,
@@ -187,7 +186,7 @@ local function generateTreeDump()
 
     local totalObjectsCount = 0
 
-    local function dumpNode(object, depth, isLast, prefix)
+    local function analyzeNode(object, depth, isLast, prefix)
         depth = depth or 0
         if not Config.UnlimitedDepth and depth > Config.MaxDepth then return end
 
@@ -243,7 +242,7 @@ local function generateTreeDump()
                 line = line .. " (Text: '" .. object.Text .. "')"
             end
 
-            if Config.DumpAttributes then
+            if Config.ScanAttributes then
                 pcall(function()
                     local attributes = object:GetAttributes()
                     local attrStrs = {}
@@ -259,10 +258,9 @@ local function generateTreeDump()
             table.insert(lines, line)
         end
 
-        -- สแกนต่อลงไปในชั้นลูกเสมอ
         local children = object:GetChildren()
         for i, child in ipairs(children) do
-            dumpNode(child, depth + 1, i == #children, nextPrefix)
+            analyzeNode(child, depth + 1, i == #children, nextPrefix)
         end
     end
 
@@ -272,12 +270,12 @@ local function generateTreeDump()
             table.insert(lines, "\n========================================\nSERVICE: " .. service.Name .. "\n========================================")
             local children = service:GetChildren()
             for i, child in ipairs(children) do
-                dumpNode(child, 0, i == #children, "")
+                analyzeNode(child, 0, i == #children, "")
             end
         end)
     end
 
-    if Config.DumpNilInstances and getnilinstances then
+    if Config.ScanNilInstances and getnilinstances then
         pcall(function()
             table.insert(lines, "\n========================================\nSERVICE: NilInstances (Memory Objects)\n========================================")
             local nilList = getnilinstances()
@@ -292,21 +290,24 @@ local function generateTreeDump()
         end)
     end
 
-    table.insert(lines, 1, "-- Total Extracted Objects: " .. tostring(totalObjectsCount))
+    table.insert(lines, 1, "-- Total Analyzed Objects: " .. tostring(totalObjectsCount))
     return lines
 end
 
 -- ==========================================================
--- ⚡ ENGINE 2: UNIVERSAL DEEP REMOTE SPY
+-- ⚡ ENGINE 2: NETWORK TRACE & EVENT SPY
 -- ==========================================================
 
-local function serializeArg(val, visited)
+local function serializeArg(val, indentLevel, visited)
     visited = visited or {}
+    indentLevel = indentLevel or 1
+    local indent = string.rep("\t", indentLevel)
     local t = typeof(val)
+
     if t == "string" then
         return '"' .. tostring(val) .. '"'
     elseif t == "Instance" then
-        return "game." .. val:GetFullName()
+        return 'game.' .. val:GetFullName()
     elseif t == "Vector3" then
         return string.format("Vector3.new(%.2f, %.2f, %.2f)", val.X, val.Y, val.Z)
     elseif t == "CFrame" then
@@ -314,12 +315,35 @@ local function serializeArg(val, visited)
     elseif t == "table" then
         if visited[val] then return "{...}" end
         visited[val] = true
-        local pairsStr = {}
+        
+        local isArray = true
+        local maxIndex = 0
         for k, v in pairs(val) do
-            local keyStr = typeof(k) == "string" and ('["' .. k .. '"]') or ("[" .. tostring(k) .. "]")
-            table.insert(pairsStr, keyStr .. " = " .. serializeArg(v, visited))
+            if type(k) == "number" and k > 0 and math.floor(k) == k then
+                if k > maxIndex then maxIndex = k end
+            else
+                isArray = false
+            end
         end
-        return "{" .. table.concat(pairsStr, ", ") .. "}"
+        if #val ~= maxIndex then isArray = false end
+
+        local entries = {}
+        if isArray then
+            for i, v in ipairs(val) do
+                table.insert(entries, serializeArg(v, indentLevel + 1, visited))
+            end
+            if #entries <= 3 then
+                return "{ " .. table.concat(entries, ", ") .. " }"
+            else
+                return "{\n" .. indent .. "\t" .. table.concat(entries, ",\n" .. indent .. "\t") .. "\n" .. indent .. "}"
+            end
+        else
+            for k, v in pairs(val) do
+                local keyStr = type(k) == "string" and ('["' .. k .. '"]') or ("[" .. tostring(k) .. "]")
+                table.insert(entries, keyStr .. " = " .. serializeArg(v, indentLevel + 1, visited))
+            end
+            return "{\n" .. indent .. "\t" .. table.concat(entries, ",\n" .. indent .. "\t") .. "\n" .. indent .. "}"
+        end
     else
         return tostring(val)
     end
@@ -338,8 +362,8 @@ if hookmetamethod and getrawmetatable then
             local method = getnamecallmethod()
             local args = {...}
 
-            -- เมื่อปิด Remote Spy หรือสคริปต์ตัวเองเรียก จะส่งสัญญาณกลับมาเป็นปกติทันที 100%
-            if not Config.RemoteSpyEnabled or checkcaller() then
+            -- เมื่อปิด Network Trace จะส่งสัญญาณกลับมาเป็นปกติ 100%
+            if not Config.NetworkTraceEnabled or checkcaller() then
                 return oldNamecall(self, ...)
             end
 
@@ -353,47 +377,38 @@ if hookmetamethod and getrawmetatable then
 
                 if not isIgnored then
                     Config.TotalCalls = Config.TotalCalls + 1
-                    Config.CapturedRemotePaths[remotePath] = (Config.CapturedRemotePaths[remotePath] or 0) + 1
+                    Config.CapturedPaths[remotePath] = (Config.CapturedPaths[remotePath] or 0) + 1
 
                     local formattedArgs = {}
                     for i, arg in ipairs(args) do
-                        table.insert(formattedArgs, serializeArg(arg))
+                        table.insert(formattedArgs, serializeArg(arg, 1))
                     end
 
                     local timestamp = os.date("%H:%M:%S")
-                    local logLine = ""
+                    local logBlock = ""
 
-                    if Config.RawTraceMode then
-                        local unpackArgs = table.concat(formattedArgs, ",\n\t")
-                        logLine = string.format("-- [%s] Call #%d\nlocal args = {\n\t%s\n}\ngame:GetService(\"%s\"):WaitForChild(\"%s\"):FireServer(unpack(args))\n",
-                            timestamp, Config.TotalCalls, unpackArgs, self.Parent and self.Parent.Name or "ReplicatedStorage", self.Name)
-                    else
+                    if Config.RawScriptFormat then
+                        local argsList = table.concat(formattedArgs, ",\n\t")
+                        logBlock = string.format("-- [%s] [Call #%d] %s\nlocal args = {\n\t%s\n}\ngame:GetService(\"%s\"):WaitForChild(\"%s\"):FireServer(unpack(args))",
+                            timestamp, Config.TotalCalls, remotePath, argsList, self.Parent and self.Parent.Name or "ReplicatedStorage", self.Name)
+                        
                         if Config.LastClickedUI and (tick() - Config.LastClickTime < 0.6) then
-                            logLine = string.format("[%s] %s -> TRIGGERED: game.%s:%s(%s)", 
-                                timestamp, Config.LastClickedUI, remotePath, method, table.concat(formattedArgs, ", "))
+                            logBlock = string.format("-- %s\n%s", Config.LastClickedUI, logBlock)
                             Config.LastClickedUI = nil
-                        else
-                            local callerScript = "Unknown Script"
-                            if getcallingscript then
-                                local s = getcallingscript()
-                                if s then callerScript = s:GetFullName() end
-                            end
-                            logLine = string.format("[%s] [Call #%d] [Caller: game.%s] game.%s:%s(%s)", 
-                                timestamp, Config.CapturedRemotePaths[remotePath], callerScript, remotePath, method, table.concat(formattedArgs, ", "))
                         end
+                    else
+                        logBlock = string.format("[%s] [Call #%d] game.%s:%s(%s)", timestamp, Config.CapturedPaths[remotePath], remotePath, method, table.concat(formattedArgs, ", "))
                     end
 
-                    table.insert(Config.CapturedRemotes, logLine)
-                    if Config.LogToConsole then print("[Zentih RemoteSpy]: " .. logLine) end
+                    table.insert(Config.CapturedLogs, logBlock)
+                    if Config.LogToConsole then print("[Zentih Trace]:\n" .. logBlock) end
                 end
 
-                -- แบบที่ 1 (Block Mode): บล็อกไม่ให้ส่งข้อมูลไปทางเซิร์ฟเวอร์
-                if Config.BlockRemoteServer then
+                if Config.BlockNetworkServer then
                     return nil
                 end
             end
 
-            -- แบบที่ 2 (Normal Mode): เล่นได้ตามปกติและส่งสัญญาณไปหาเกมปกติ 100%
             return oldNamecall(self, ...)
         end))
 
@@ -410,7 +425,7 @@ local MainTab = Window:Tab({ Title = "Main", Icon = "home" })
 
 MainTab:Paragraph({
     Title = "Zentih HUB - Universal Deep Analyzer",
-    Desc = "เครื่องมือวิเคราะห์และดักจับ Remote/Objects เชิงลึกสำหรับทุกแมพใน Roblox อัพเกรดระบบตรวจจับวัตถุซ่อนใน Memory และสแกน Trace สคริปต์ผู้สั่งงาน"
+    Desc = "ระบบวิเคราะห์ข้อมูลโครงสร้างและแกะรอยเครือข่าย แปลงข้อมูลเป็นชุดคำสั่งสคริปต์อัตโนมัติ"
 })
 
 MainTab:Button({
@@ -424,148 +439,125 @@ MainTab:Button({
     end
 })
 
--- TAB 2: MAP DUMPER
-local DumpTab = Window:Tab({ Title = "Map Dumper", Icon = "file-text" })
+-- TAB 2: STRUCTURE ANALYZER (เปลี่ยนชื่อจาก Map Dumper)
+local AnalyzerTab = Window:Tab({ Title = "Structure Analyzer", Icon = "file-text" })
 
-DumpTab:Input({
+AnalyzerTab:Input({
     Title = "File Name",
     Placeholder = Config.FileName,
     Callback = function(val)
-        Config.FileName = (val ~= "" and val) or ("ZentihDump_" .. tostring(game.PlaceId))
+        Config.FileName = (val ~= "" and val) or ("ZentihAnalysis_" .. tostring(game.PlaceId))
     end
 })
 
-DumpTab:Dropdown({
-    Title = "Tree Style (รูปแบบกิ่งไม้)",
+AnalyzerTab:Dropdown({
+    Title = "Tree Style (รูปแบบโครงสร้าง)",
     Values = {"Railway (├──)", "Short Code", "Notepad"},
     Value = "Railway (├──)",
     Callback = function(val) Config.TreeStyle = val end
 })
 
-DumpTab:Dropdown({
+AnalyzerTab:Dropdown({
     Title = "Object Filter (ตัวกรองวัตถุ)",
     Values = {"ทั้งหมด (All Objects)", "เฉพาะ Remote", "เฉพาะ ModuleScript"},
     Value = "ทั้งหมด (All Objects)",
     Callback = function(val) Config.FilterType = val end
 })
 
-DumpTab:Toggle({
-    Title = "1. เย็น (Include Folders & Models)",
-    Value = true,
-    Callback = function(val) Config.SwitchGameAssets = val end
-})
+AnalyzerTab:Toggle({ Title = "1. องค์ประกอบเกม (Folders & Models)", Value = true, Callback = function(val) Config.SwitchGameAssets = val end })
+AnalyzerTab:Toggle({ Title = "2. เครือข่าย (Remotes & Events)", Value = true, Callback = function(val) Config.SwitchRemotes = val end })
+AnalyzerTab:Toggle({ Title = "3. ส่วนติดต่อผู้ใช้ (UI Elements & Prompts)", Value = true, Callback = function(val) Config.SwitchUI = val end })
 
-DumpTab:Toggle({
-    Title = "2. รีโมท (Include Remotes & Events)",
-    Value = true,
-    Callback = function(val) Config.SwitchRemotes = val end
-})
+AnalyzerTab:Toggle({ Title = "Unlimited Tree Depth (ไม่จำกัดความลึก)", Value = true, Callback = function(val) Config.UnlimitedDepth = val end })
+AnalyzerTab:Slider({ Title = "Max Tree Depth (กรณีปิด Unlimited)", Step = 1, Value = { Min = 1, Max = 50, Default = 30 }, Callback = function(val) Config.MaxDepth = val end })
 
-DumpTab:Toggle({
-    Title = "3. ยูไอ (Include UI Buttons & Prompts)",
-    Value = true,
-    Callback = function(val) Config.SwitchUI = val end
-})
+AnalyzerTab:Toggle({ Title = "Scan Attributes", Value = true, Callback = function(val) Config.ScanAttributes = val end })
+AnalyzerTab:Toggle({ Title = "Scan Nil Instances in Memory", Value = true, Callback = function(val) Config.ScanNilInstances = val end })
 
-DumpTab:Toggle({
-    Title = "Unlimited Tree Depth (ไม่จำกัดความลึกกิ่งไม้)",
-    Value = true,
-    Callback = function(val) Config.UnlimitedDepth = val end
-})
+local ServiceSection = AnalyzerTab:Section({ Title = "Select Services to Analyze (เลือกบริการที่ต้องการวิเคราะห์)", Opened = true })
+ServiceSection:Toggle({ Title = "Workspace", Value = true, Callback = function(val) Config.ScanWorkspace = val end })
+ServiceSection:Toggle({ Title = "ReplicatedStorage", Value = true, Callback = function(val) Config.ScanReplicated = val end })
+ServiceSection:Toggle({ Title = "StarterGui", Value = true, Callback = function(val) Config.ScanStarterGui = val end })
+ServiceSection:Toggle({ Title = "Players", Value = true, Callback = function(val) Config.ScanPlayers = val end })
+ServiceSection:Toggle({ Title = "Lighting", Value = true, Callback = function(val) Config.ScanLighting = val end })
+ServiceSection:Toggle({ Title = "ReplicatedFirst", Value = true, Callback = function(val) Config.ScanReplicatedFirst = val end })
 
-DumpTab:Slider({
-    Title = "Max Tree Depth (ความลึกกรณีปิด Unlimited)",
-    Step = 1,
-    Value = { Min = 1, Max = 50, Default = 30 },
-    Callback = function(val) Config.MaxDepth = val end
-})
-
-DumpTab:Toggle({ Title = "Dump Attributes", Value = true, Callback = function(val) Config.DumpAttributes = val end })
-DumpTab:Toggle({ Title = "Scan Nil Instances in Memory", Value = true, Callback = function(val) Config.DumpNilInstances = val end })
-
-local ServiceSection = DumpTab:Section({ Title = "Select Services to Dump (เลือกพื้นที่ดัมป์)", Opened = true })
-ServiceSection:Toggle({ Title = "Workspace", Value = true, Callback = function(val) Config.DumpWorkspace = val end })
-ServiceSection:Toggle({ Title = "ReplicatedStorage", Value = true, Callback = function(val) Config.DumpReplicated = val end })
-ServiceSection:Toggle({ Title = "StarterGui", Value = true, Callback = function(val) Config.DumpStarterGui = val end })
-ServiceSection:Toggle({ Title = "Players", Value = true, Callback = function(val) Config.DumpPlayers = val end })
-ServiceSection:Toggle({ Title = "Lighting", Value = true, Callback = function(val) Config.DumpLighting = val end })
-ServiceSection:Toggle({ Title = "ReplicatedFirst", Value = true, Callback = function(val) Config.DumpReplicatedFirst = val end })
-
-DumpTab:Button({
-    Title = "🚀 DUMP FILE NOW (บันทึกลงไฟล์ .txt)",
+AnalyzerTab:Button({
+    Title = "🚀 ANALYZE & SAVE FILE (บันทึกผลการวิเคราะห์)",
     Callback = function()
-        local dumpLines = generateTreeDump()
-        local parts = SaveSmartFile(Config.FileName, dumpLines)
+        local analysisLines = generateStructureAnalysis()
+        local parts = SaveSmartFile(Config.FileName, analysisLines)
         WindUI:Notify({ 
             Title = "Zentih HUB", 
-            Content = "บันทึกไฟล์สำเร็จ! " .. (parts > 1 and ("แยกเป็น " .. parts .. " ไฟล์เนื่องจากขนาดใหญ่เกิน 8.5MB") or "จัดเก็บไฟล์เรียบร้อย"), 
+            Content = "บันทึกผลการวิเคราะห์สำเร็จ! " .. (parts > 1 and ("แยกเป็น " .. parts .. " ไฟล์เนื่องจากขนาดใหญ่เกิน 8.5MB") or "จัดเก็บไฟล์เรียบร้อย"), 
             Duration = 4 
         })
     end
 })
 
--- TAB 3: REMOTE SPY
-local SpyTab = Window:Tab({ Title = "Remote Spy (Trace)", Icon = "zap" })
+-- TAB 3: NETWORK TRACE (เปลี่ยนชื่อจาก Remote Spy)
+local TraceTab = Window:Tab({ Title = "Network Trace", Icon = "zap" })
 
-SpyTab:Toggle({
-    Title = "Enable Remote Spy (เปิด/ปิด ระบบดัก Remote)",
+TraceTab:Toggle({
+    Title = "Enable Network Trace (เปิด/ปิด ระบบแกะรอยเครือข่าย)",
     Value = false,
     Callback = function(val)
-        Config.RemoteSpyEnabled = val
+        Config.NetworkTraceEnabled = val
         WindUI:Notify({
-            Title = "Remote Spy Status",
-            Content = val and "เริ่มการดักอัดสัญญาณ Remote..." or "ปิดระบบ Remote Spy (เกมกลับมาปกติ 100%)",
+            Title = "Network Trace Status",
+            Content = val and "เริ่มการแกะรอยเครือข่าย..." or "ปิดระบบแกะรอย (เกมกลับมาปกติ 100%)",
             Duration = 2
         })
     end
 })
 
-SpyTab:Toggle({
+TraceTab:Toggle({
     Title = "Raw Script Format ( local args = {...} )",
     Value = true,
-    Callback = function(val) Config.RawTraceMode = val end
+    Callback = function(val) Config.RawScriptFormat = val end
 })
 
-SpyTab:Toggle({
-    Title = "ใช้เเบบที่ 1: บล็อก Remote (Block Mode)",
+TraceTab:Toggle({
+    Title = "Block Network Server (โหมดระงับการส่ง)",
     Value = false,
     Callback = function(val)
-        Config.BlockRemoteServer = val
+        Config.BlockNetworkServer = val
         WindUI:Notify({
-            Title = "Remote Spy Mode",
-            Content = val and "เปิดโหมดบล็อก Remote (ไม่ส่งไปหาเซิร์ฟเวอร์)" or "เปิดโหมดปกติ (ส่งไปหาเซิร์ฟเวอร์ปกติ)",
+            Title = "Network Mode",
+            Content = val and "เปิดโหมดระงับการส่งเครือข่าย" or "เปิดโหมดปกติ",
             Duration = 2
         })
     end
 })
 
-SpyTab:Toggle({ Title = "Filter Movement / Physics", Value = true, Callback = function(val) Config.IgnoreMovement = val end })
-SpyTab:Toggle({ Title = "Filter Chat Remotes", Value = true, Callback = function(val) Config.IgnoreChat = val end })
-SpyTab:Toggle({ Title = "Filter Animations / Ping", Value = true, Callback = function(val) Config.IgnoreAnims = val end })
+TraceTab:Toggle({ Title = "Filter Movement / Physics", Value = true, Callback = function(val) Config.IgnoreMovement = val end })
+TraceTab:Toggle({ Title = "Filter Chat Events", Value = true, Callback = function(val) Config.IgnoreChat = val end })
+TraceTab:Toggle({ Title = "Filter Animations / Ping", Value = true, Callback = function(val) Config.IgnoreAnims = val end })
 
-SpyTab:Button({
-    Title = "💾 Save Remote Logs to File (.txt)",
+TraceTab:Button({
+    Title = "💾 Save Network Logs to File (.txt)",
     Callback = function()
-        if #Config.CapturedRemotes == 0 then
-            WindUI:Notify({ Title = "Zentih HUB", Content = "ยังไม่มีประวัติ Remote ที่อัดไว้", Duration = 3 })
+        if #Config.CapturedLogs == 0 then
+            WindUI:Notify({ Title = "Zentih HUB", Content = "ยังไม่มีประวัติเครือข่ายที่บันทึกไว้", Duration = 3 })
             return
         end
-        local spyData = {
-            "-- === ZENTIH HUB: CAPTURED REMOTE LOGS == --",
-            "-- Total Captured Calls: " .. tostring(Config.TotalCalls) .. "\n"
+        local logData = {
+            "-- === ZENTIH HUB: EXECUTABLE NETWORK TRACE LOGS == --\n"
         }
-        for _, line in ipairs(Config.CapturedRemotes) do table.insert(spyData, line) end
+        for _, block in ipairs(Config.CapturedLogs) do
+            table.insert(logData, block .. "\n\n--------------------------------------------------\n")
+        end
         
-        local parts = SaveSmartFile("Zentih_RemoteSpy_" .. Config.FileName, spyData)
+        local parts = SaveSmartFile("Zentih_NetworkTrace_" .. Config.FileName, logData)
         WindUI:Notify({ Title = "Zentih HUB", Content = "บันทึก Logs สำเร็จ! (" .. parts .. " ไฟล์)", Duration = 4 })
     end
 })
 
-SpyTab:Button({
+TraceTab:Button({
     Title = "🤖 Generate AI Prompt Format",
     Callback = function()
-        local promptData = "นี่คือ Remote Events ที่จับสัญญาณเชิงลึกและแกะรอยมาได้จากเกม Roblox ช่วยเขียนสคริปต์ทำงานอัตโนมัติให้หน่อย:\n\n"
-        promptData = promptData .. table.concat(Config.CapturedRemotes, "\n")
+        local promptData = "นี่คือ Network Events ที่จับสัญญาณเชิงลึกและแปลงเป็นโค้ดมาได้ ช่วยเขียนสคริปต์ทำงานอัตโนมัติให้หน่อย:\n\n"
+        promptData = promptData .. table.concat(Config.CapturedLogs, "\n\n")
         if setclipboard then
             setclipboard(promptData)
             WindUI:Notify({ Title = "Zentih HUB", Content = "คัดลอก Prompt สำหรับ AI เรียบร้อยแล้ว!", Duration = 3 })
@@ -573,11 +565,11 @@ SpyTab:Button({
     end
 })
 
-SpyTab:Button({
+TraceTab:Button({
     Title = "🗑️ Clear All Logs",
     Callback = function()
-        Config.CapturedRemotes = {}
-        Config.CapturedRemotePaths = {}
+        Config.CapturedLogs = {}
+        Config.CapturedPaths = {}
         Config.TotalCalls = 0
         WindUI:Notify({ Title = "Zentih HUB", Content = "ล้างประวัติ Logs เรียบร้อยแล้ว", Duration = 2 })
     end
@@ -623,18 +615,18 @@ local function CreateCleanToggleBtn()
     Frame.Active = true
     Frame.Parent = ScreenGui
 
-    local ImageBtn = Instance.new("ImageButton")
-    ImageBtn.Name = "LogoBtn"
-    ImageBtn.Size = UDim2.fromScale(1, 1)
-    ImageBtn.Position = UDim2.fromScale(0, 0)
-    ImageBtn.BackgroundTransparency = 1
-    ImageBtn.BorderSizePixel = 0
-    ImageBtn.Image = LogoAsset
-    ImageBtn.Parent = Frame
+    LogoBtn = Instance.new("ImageButton")
+    LogoBtn.Name = "LogoBtn"
+    LogoBtn.Size = UDim2.fromScale(1, 1)
+    LogoBtn.Position = UDim2.fromScale(0, 0)
+    LogoBtn.BackgroundTransparency = 1
+    LogoBtn.BorderSizePixel = 0
+    LogoBtn.Image = LogoAsset
+    LogoBtn.Parent = Frame
 
     local BtnCorner = Instance.new("UICorner")
     BtnCorner.CornerRadius = UDim.new(1, 0)
-    BtnCorner.Parent = ImageBtn
+    BtnCorner.Parent = LogoBtn
 
     local dragging, dragInput, dragStart, startPos
     local function update(input)
@@ -661,7 +653,7 @@ local function CreateCleanToggleBtn()
         if input == dragInput and dragging then update(input) end
     end)
 
-    ImageBtn.MouseButton1Click:Connect(function()
+    LogoBtn.MouseButton1Click:Connect(function()
         pcall(function() Window:Toggle() end)
     end)
 end
@@ -669,7 +661,7 @@ end
 CreateCleanToggleBtn()
 pcall(function() Window:SelectTab(1) end)
 
-print("[Zentih HUB] Universal Dumper & Deep Spy Loaded Successfully!")
+print("[Zentih HUB] Deep Analyzer & Network Trace Engine Loaded Successfully!")
 
 end)
 
