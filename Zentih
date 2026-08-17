@@ -1,9 +1,9 @@
 --[[
     ================================================================
-    Zentih HUB - Universal Deep Game Dumper & Trace RemoteSpy (FULL)
+    Zentih HUB - Universal Deep Game Dumper & Trace RemoteSpy
     ================================================================
     แบรนด์: Zentih HUB
-    วัตถุประสงค์: สแกน ดักจับ และเจาะหา Remotes/Objects เชิงลึกทุกแมพใน Roblox
+    วัตถุประสงค์: สแกน ดักจับ และเจาะหา Remotes/Objects ทุกแมพใน Roblox
     UI Engine: WindUI (Official Latest Release)
     โลโก้: rbxassetid://74773895938557
     รองรับ: Delta Mobile, Potassium, Fluxus, Wave, Solara และตัวรันทุกชนิด
@@ -11,7 +11,7 @@
 
 local ok, errMsg = pcall(function()
 
--- 1. โหลดไลบรารี WindUI
+-- 1. โหลดไลบรารี WindUI เวอร์ชันล่าสุดตามคู่มือทางการ
 local WindUI = loadstring(game:HttpGet(
     "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
 ))()
@@ -60,23 +60,29 @@ local Window = WindUI:CreateWindow({
 -- 3. สถานะและการตั้งค่าระบบ (Global State)
 local Config = {
     FileName = "ZentihDump_" .. tostring(game.PlaceId),
-    MaxDepth = 30, -- เพิ่มความลึกเริ่มต้นเป็น 30 ชั้น
-    UnlimitedDepth = true, -- สวิตช์ไม่จำกัดความลึก
+    MaxDepth = 30,
+    UnlimitedDepth = true,
     TreeStyle = "Railway (├──)",
     FilterType = "ทั้งหมด (All Objects)",
     
     -- สวิตช์เลือกพื้นที่ดัมพ์
     DumpWorkspace = true,
     DumpReplicated = true,
-    DumpPlayers = true,
-    DumpLighting = true,
+    DumpPlayers = false,
+    DumpLighting = false,
     DumpStarterGui = true,
-    DumpReplicatedFirst = true,
+    DumpReplicatedFirst = false,
     DumpAttributes = true,
     DumpNilInstances = true,
     
+    -- สวิตช์เลือกหมวดหมู่ดึงข้อมูล
+    SwitchGameAssets = true, -- 1. เย็น (Folders & Models)
+    SwitchRemotes = true,    -- 2. รีโมท (Remotes & Events)
+    SwitchUI = true,         -- 3. ยูไอ (UI Buttons & Prompts)
+
     -- Remote Spy Engine State
     RemoteSpyEnabled = false,
+    BlockRemoteServer = false, -- false = แบบที่ 2 (Normal Mode), true = แบบที่ 1 (Block Mode)
     IgnoreMovement = true,
     IgnoreChat = true,
     IgnoreAnims = true,
@@ -110,7 +116,7 @@ end
 -- ระบบ Smart File Saver (แยกไฟล์อัตโนมัติเมื่อขนาดเกิน 8.5MB)
 local function SaveSmartFile(baseName, contentLines)
     local rawName = baseName:gsub("%.txt$", "")
-    local MAX_BYTES = 8.5 * 1024 * 1024 -- 8.5MB Safe Threshold
+    local MAX_BYTES = 8.5 * 1024 * 1024 -- 8.5MB Safe Limit
     local part = 1
     local currentChunk = {}
     local currentSize = 0
@@ -138,14 +144,14 @@ local function SaveSmartFile(baseName, contentLines)
 end
 
 -- ==========================================================
--- 🎯 UI TRACKER ENGINE (ดักจับการกดปุ่ม UI)
+-- 🎯 UI TRACKER ENGINE (ดักจับเฉพาะปุ่มกด UI ไม่เก็บบล็อกพื้นดิน)
 -- ==========================================================
 local function hookUIElement(inst)
     if inst:IsA("TextButton") or inst:IsA("ImageButton") then
         inst.MouseButton1Click:Connect(function()
             if not Config.RemoteSpyEnabled then return end
             local btnText = inst:IsA("TextButton") and inst.Text or inst.Name
-            Config.LastClickedUI = string.format("[UI CLICK] Name: '%s' | Path: game.%s", btnText, inst:GetFullName())
+            Config.LastClickedUI = string.format("[UI BUTTON CLICKED] Name: '%s' | Path: game.%s", btnText, inst:GetFullName())
             Config.LastClickTime = tick()
         end)
     elseif inst:IsA("ProximityPrompt") then
@@ -166,12 +172,12 @@ pcall(function()
 end)
 
 -- ==========================================================
--- 🛠️ ENGINE 1: FULL DEEP TREE DUMPER (ระบบดัมพ์แบบลึกไม่ตัดขยะ)
+-- 🛠️ ENGINE 1: UNIVERSAL TREE DUMPER (ดัมพ์โครงสร้างแมพ)
 -- ==========================================================
 local function generateTreeDump()
     local lines = {
         "-- ========================================",
-        "-- ZENTIH HUB: FULL DEEP GAME DUMP DATA",
+        "-- ZENTIH HUB: UNIVERSAL GAME DUMP DATA",
         "-- Place ID: " .. tostring(game.PlaceId),
         "-- Date: " .. os.date("%Y-%m-%d %H:%M:%S"),
         "-- Format: " .. Config.TreeStyle,
@@ -202,52 +208,54 @@ local function generateTreeDump()
         local className = object.ClassName
         local name = object.Name
 
-        -- ตรวจสอบตัวกรอง
-        local shouldShow = true
-        if Config.FilterType == "เฉพาะ Remote" then
-            if not (className:find("Remote") or className:find("Bindable")) then
-                shouldShow = false
-            end
-        elseif Config.FilterType == "เฉพาะ ModuleScript" then
-            if className ~= "ModuleScript" then
-                shouldShow = false
-            end
+        -- กรองตามสวิตช์เลือก 3 หมวด
+        local isRemote = className:find("Remote") or className:find("Bindable")
+        local isUI = className:find("Button") or className == "ProximityPrompt" or className == "ClickDetector" or className == "ScreenGui"
+        local isAsset = not isRemote and not isUI
+
+        if isRemote and not Config.SwitchRemotes then return end
+        if isUI and not Config.SwitchUI then return end
+        if isAsset and not Config.SwitchGameAssets then return end
+
+        -- กรองตาม FilterType
+        if Config.FilterType == "เฉพาะ Remote" and not isRemote then
+            return
+        elseif Config.FilterType == "เฉพาะ ModuleScript" and className ~= "ModuleScript" then
+            return
         end
 
-        if shouldShow then
-            totalObjectsCount = totalObjectsCount + 1
-            local tag = "[" .. className .. "]"
-            if className:find("RemoteEvent") then tag = "[RemoteEvent ⚡]"
-            elseif className:find("RemoteFunction") then tag = "[RemoteFunction 🔄]"
-            elseif className == "ModuleScript" then tag = "[ModuleScript 📜]"
-            elseif className == "LocalScript" then tag = "[LocalScript 📝]"
-            end
-
-            local line = prefix .. currentBranch .. tag .. " " .. name
-
-            if className:find("Remote") then
-                line = line .. " -> Path: game." .. object:GetFullName()
-            elseif object:IsA("ValueObject") then
-                pcall(function() line = line .. " (Value: " .. tostring(object.Value) .. ")" end)
-            elseif object:IsA("TextButton") then
-                line = line .. " (Text: '" .. object.Text .. "')"
-            end
-
-            if Config.DumpAttributes then
-                pcall(function()
-                    local attrs = object:GetAttributes()
-                    local attrStrs = {}
-                    for k, v in pairs(attrs) do
-                        table.insert(attrStrs, tostring(k) .. "=" .. tostring(v))
-                    end
-                    if #attrStrs > 0 then
-                        line = line .. " {Attr: " .. table.concat(attrStrs, ", ") .. "}"
-                    end
-                end)
-            end
-
-            table.insert(lines, line)
+        totalObjectsCount = totalObjectsCount + 1
+        local tag = "[" .. className .. "]"
+        if className:find("RemoteEvent") then tag = "[RemoteEvent ⚡]"
+        elseif className:find("RemoteFunction") then tag = "[RemoteFunction 🔄]"
+        elseif className == "ModuleScript" then tag = "[ModuleScript 📜]"
+        elseif className == "LocalScript" then tag = "[LocalScript 📝]"
         end
+
+        local line = prefix .. currentBranch .. tag .. " " .. name
+
+        if className:find("Remote") then
+            line = line .. " -> Path: game." .. object:GetFullName()
+        elseif object:IsA("ValueObject") then
+            pcall(function() line = line .. " (Value: " .. tostring(object.Value) .. ")" end)
+        elseif object:IsA("TextButton") then
+            line = line .. " (Text: '" .. object.Text .. "')"
+        end
+
+        if Config.DumpAttributes then
+            pcall(function()
+                local attributes = object:GetAttributes()
+                local attrStrs = {}
+                for k, v in pairs(attributes) do
+                    table.insert(attrStrs, tostring(k) .. "=" .. tostring(v))
+                end
+                if #attrStrs > 0 then
+                    line = line .. " {Attributes: " .. table.concat(attrStrs, ", ") .. "}"
+                end
+            end)
+        end
+
+        table.insert(lines, line)
 
         local children = object:GetChildren()
         for i, child in ipairs(children) do
@@ -266,7 +274,6 @@ local function generateTreeDump()
         end)
     end
 
-    -- ดึงของใน Memory (Nil Instances) ร่วมด้วยหากเปิดสวิตช์
     if Config.DumpNilInstances and getnilinstances then
         pcall(function()
             table.insert(lines, "\n========================================\nSERVICE: NilInstances (Memory Objects)\n========================================")
@@ -287,15 +294,20 @@ local function generateTreeDump()
 end
 
 -- ==========================================================
--- ⚡ ENGINE 2: UNIVERSAL DEEP REMOTE SPY
+-- ⚡ ENGINE 2: UNIVERSAL DEEP REMOTE SPY (เมื่อปิดจะกลับมาปกติ)
 -- ==========================================================
+
 local function serializeArg(val, visited)
     visited = visited or {}
     local t = typeof(val)
-    if t == "string" then return '"' .. tostring(val) .. '"'
-    elseif t == "Instance" then return "game." .. val:GetFullName()
-    elseif t == "Vector3" then return string.format("Vector3.new(%.2f, %.2f, %.2f)", val.X, val.Y, val.Z)
-    elseif t == "CFrame" then return string.format("CFrame.new(%.2f, %.2f, %.2f)", val.Position.X, val.Position.Y, val.Position.Z)
+    if t == "string" then
+        return '"' .. tostring(val) .. '"'
+    elseif t == "Instance" then
+        return "game." .. val:GetFullName()
+    elseif t == "Vector3" then
+        return string.format("Vector3.new(%.2f, %.2f, %.2f)", val.X, val.Y, val.Z)
+    elseif t == "CFrame" then
+        return string.format("CFrame.new(%.2f, %.2f, %.2f)", val.Position.X, val.Position.Y, val.Position.Z)
     elseif t == "table" then
         if visited[val] then return "{...}" end
         visited[val] = true
@@ -305,54 +317,132 @@ local function serializeArg(val, visited)
             table.insert(pairsStr, keyStr .. " = " .. serializeArg(v, visited))
         end
         return "{" .. table.concat(pairsStr, ", ") .. "}"
-    else return tostring(val)
+    else
+        return tostring(val)
     end
 end
 
+-- Metamethod Hooking
 local oldNamecall
-oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-    local method = getnamecallmethod()
-    local args = {...}
-
-    if Config.RemoteSpyEnabled and not checkcaller() and (method == "FireServer" or method == "InvokeServer") then
-        local remotePath = self:GetFullName()
+if hookmetamethod and getrawmetatable then
+    pcall(function()
+        local grm = getrawmetatable(game)
+        local setreadonly = setreadonly or make_writeable or function() end
         
-        local isIgnored = false
-        if Config.IgnoreMovement and (remotePath:find("Move") or remotePath:find("Position") or remotePath:find("Walk") or remotePath:find("Physics")) then isIgnored = true end
-        if Config.IgnoreChat and (remotePath:find("Chat") or remotePath:find("SayMessage")) then isIgnored = true end
-        if Config.IgnoreAnims and (remotePath:find("Animate") or remotePath:find("Ping")) then isIgnored = true end
+        setreadonly(grm, false)
 
-        if not isIgnored then
-            Config.TotalCalls = Config.TotalCalls + 1
-            Config.CapturedRemotePaths[remotePath] = (Config.CapturedRemotePaths[remotePath] or 0) + 1
+        oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
+            local method = getnamecallmethod()
+            local args = {...}
 
-            local formattedArgs = {}
-            for i, arg in ipairs(args) do formattedArgs[i] = serializeArg(arg) end
-
-            local timestamp = os.date("%H:%M:%S")
-            local logLine = ""
-
-            if Config.LastClickedUI and (tick() - Config.LastClickTime < 0.6) then
-                logLine = string.format("[%s] %s -> TRIGGERED: game.%s:%s(%s)", 
-                    timestamp, Config.LastClickedUI, remotePath, method, table.concat(formattedArgs, ", "))
-                Config.LastClickedUI = nil
-            else
-                local callerScript = "Unknown Script"
-                if getcallingscript then
-                    local s = getcallingscript()
-                    if s then callerScript = s:GetFullName() end
-                end
-                logLine = string.format("[%s] [Call #%d] [Caller: game.%s] game.%s:%s(%s)", 
-                    timestamp, Config.CapturedRemotePaths[remotePath], callerScript, remotePath, method, table.concat(formattedArgs, ", "))
+            -- เมื่อปิด Remote Spy หรือสคริปต์ตัวเองเรียก จะส่งสัญญาณกลับมาเป็นปกติทันที 100%
+            if not Config.RemoteSpyEnabled or checkcaller() then
+                return oldNamecall(self, ...)
             end
 
-            table.insert(Config.CapturedRemotes, logLine)
-            if Config.LogToConsole then print("[Zentih RemoteSpy]: " .. logLine) end
+            if method == "FireServer" or method == "InvokeServer" then
+                local remotePath = self:GetFullName()
+                
+                local isIgnored = false
+                if Config.IgnoreMovement and (remotePath:find("Move") or remotePath:find("Position") or remotePath:find("Physics") or remotePath:find("Walk")) then isIgnored = true end
+                if Config.IgnoreChat and (remotePath:find("Chat") or remotePath:find("SayMessage") or remotePath:find("Bubble")) then isIgnored = true end
+                if Config.IgnoreAnims and (remotePath:find("Animate") or remotePath:find("HandleAnimations") or remotePath:find("Ping")) then isIgnored = true end
+
+                if not isIgnored then
+                    Config.TotalCalls = Config.TotalCalls + 1
+                    Config.CapturedRemotePaths[remotePath] = (Config.CapturedRemotePaths[remotePath] or 0) + 1
+
+                    local formattedArgs = {}
+                    for i, arg in ipairs(args) do formattedArgs[i] = serializeArg(arg) end
+
+                    local timestamp = os.date("%H:%M:%S")
+                    local logLine = ""
+
+                    -- ตรวจจับปุ่มกด UI กับ Remote
+                    if Config.LastClickedUI and (tick() - Config.LastClickTime < 0.6) then
+                        logLine = string.format("[%s] %s -> TRIGGERED: game.%s:%s(%s)", 
+                            timestamp, Config.LastClickedUI, remotePath, method, table.concat(formattedArgs, ", "))
+                        Config.LastClickedUI = nil
+                    else
+                        local callerScript = "Unknown Script"
+                        if getcallingscript then
+                            local s = getcallingscript()
+                            if s then callerScript = s:GetFullName() end
+                        end
+                        logLine = string.format("[%s] [Call #%d] [Caller: game.%s] game.%s:%s(%s)", 
+                            timestamp, Config.CapturedRemotePaths[remotePath], callerScript, remotePath, method, table.concat(formattedArgs, ", "))
+                    end
+
+                    table.insert(Config.CapturedRemotes, logLine)
+                    if Config.LogToConsole then print("[Zentih RemoteSpy]: " .. logLine) end
+                end
+
+                -- แบบที่ 1 (Block Mode): บล็อกไม่ให้ส่งข้อมูลไปทางเซิร์ฟเวอร์
+                if Config.BlockRemoteServer then
+                    return nil
+                end
+            end
+
+            -- แบบที่ 2 (Normal Mode): เล่นได้ตามปกติและส่งสัญญาณไปหาเกมปกติ
+            return oldNamecall(self, ...)
+        end))
+
+        setreadonly(grm, true)
+    end)
+end
+
+-- ==========================================================
+-- 🔍 ENGINE 3: HIDDEN & NIL INSTANCE SCANNER
+-- ==========================================================
+local function scanNilInstances()
+    local nilLines = {
+        "-- === ZENTIH HUB: NIL & HIDDEN INSTANCES DUMP == --",
+        "-- Location: Memory / Unparented Objects\n"
+    }
+    local count = 0
+    
+    if getnilinstances then
+        local nilList = getnilinstances()
+        for i, obj in ipairs(nilList) do
+            pcall(function()
+                if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") or obj:IsA("ModuleScript") or obj:IsA("BindableEvent") then
+                    count = count + 1
+                    table.insert(nilLines, string.format("[%04d] [%s] %s (Parent: %s)", count, obj.ClassName, obj.Name, obj.Parent and obj.Parent:GetFullName() or "Nil/Memory"))
+                end
+            end)
         end
+        table.insert(nilLines, "\n-- Total Hidden Objects Found: " .. tostring(count))
+    else
+        table.insert(nilLines, "-- Executor ของคุณไม่รองรับ getnilinstances()")
+    end
+    
+    return nilLines, count
+end
+
+local function scanGCRemotes()
+    local gcLines = {
+        "-- === ZENTIH HUB: GARBAGE COLLECTOR (GC) REMOTES == --\n"
+    }
+    local count = 0
+
+    if getgc then
+        local gcList = getgc(true)
+        for _, item in ipairs(gcList) do
+            if type(item) == "table" and rawget(item, "FireServer") then
+                count = count + 1
+                table.insert(gcLines, string.format("[%04d] Found Remote Table in GC", count))
+            elseif typeof(item) == "Instance" and (item:IsA("RemoteEvent") or item:IsA("RemoteFunction")) then
+                count = count + 1
+                table.insert(gcLines, string.format("[%04d] [%s] %s -> game.%s", count, item.ClassName, item.Name, item:GetFullName()))
+            end
+        end
+        table.insert(gcLines, "\n-- Total GC Remotes Found: " .. tostring(count))
+    else
+        table.insert(gcLines, "-- Executor ของคุณไม่รองรับ getgc()")
     end
 
-    return oldNamecall(self, ...)
-end)
+    return gcLines, count
+end
 
 -- ==========================================================
 -- 📑 TABS & ELEMENTS CREATION (WindUI)
@@ -360,18 +450,30 @@ end)
 
 -- TAB 1: MAIN
 local MainTab = Window:Tab({ Title = "Main", Icon = "home" })
+
 MainTab:Paragraph({
-    Title = "Zentih HUB - Deep Analyzer (FULL DUMP)",
-    Desc = "ระบบดัมพ์ไฟล์และดักจับ Remote เชิงลึก สแกนทะลวงโครงสร้างเกมแบบไม่ตัดขยะออก พร้อมระบบจับคู่ปุ่ม UI"
+    Title = "Zentih HUB - Universal Deep Analyzer",
+    Desc = "เครื่องมือวิเคราะห์และดักจับ Remote/Objects เชิงลึกสำหรับทุกแมพใน Roblox อัพเกรดระบบตรวจจับวัตถุซ่อนใน Memory และสแกน Trace สคริปต์ผู้สั่งงาน"
 })
 
 MainTab:Button({
     Title = "Copy Discord Link",
-    Desc = "คัดลอกลิงก์ Discord ค่าย Zentih Hub",
+    Desc = "คัดลอกลิงก์ Discord ของค่าย Zentih Hub",
     Callback = function()
         if setclipboard then
             setclipboard("https://discord.gg/H6SZfAcgWZ")
-            WindUI:Notify({ Title = "Zentih HUB", Content = "คัดลอกลิงก์ Discord เรียบร้อย!", Duration = 3 })
+            WindUI:Notify({ Title = "Zentih HUB", Content = "คัดลอกลิงก์ Discord แล้ว!", Duration = 3 })
+        end
+    end
+})
+
+MainTab:Button({
+    Title = "Copy YouTube Channel Link",
+    Desc = "คัดลอกลิงก์ช่อง YouTube ของค่าย",
+    Callback = function()
+        if setclipboard then
+            setclipboard("https://m.youtube.com/@IMMORTALHUB.r")
+            WindUI:Notify({ Title = "Zentih HUB", Content = "คัดลอกลิงก์ YouTube แล้ว!", Duration = 3 })
         end
     end
 })
@@ -382,7 +484,9 @@ local DumpTab = Window:Tab({ Title = "Map Dumper", Icon = "file-text" })
 DumpTab:Input({
     Title = "File Name",
     Placeholder = Config.FileName,
-    Callback = function(val) Config.FileName = (val ~= "" and val) or ("ZentihDump_" .. tostring(game.PlaceId)) end
+    Callback = function(val)
+        Config.FileName = (val ~= "" and val) or ("ZentihDump_" .. tostring(game.PlaceId))
+    end
 })
 
 DumpTab:Dropdown({
@@ -400,13 +504,31 @@ DumpTab:Dropdown({
 })
 
 DumpTab:Toggle({
+    Title = "1. เย็น (Include Folders & Models)",
+    Value = true,
+    Callback = function(val) Config.SwitchGameAssets = val end
+})
+
+DumpTab:Toggle({
+    Title = "2. รีโมท (Include Remotes & Events)",
+    Value = true,
+    Callback = function(val) Config.SwitchRemotes = val end
+})
+
+DumpTab:Toggle({
+    Title = "3. ยูไอ (Include UI Buttons & Prompts)",
+    Value = true,
+    Callback = function(val) Config.SwitchUI = val end
+})
+
+DumpTab:Toggle({
     Title = "Unlimited Tree Depth (ไม่จำกัดความลึกกิ่งไม้)",
     Value = true,
     Callback = function(val) Config.UnlimitedDepth = val end
 })
 
 DumpTab:Slider({
-    Title = "Max Tree Depth (กรณีปิด Unlimited)",
+    Title = "Max Tree Depth (ความลึกกรณีปิด Unlimited)",
     Step = 1,
     Value = { Min = 1, Max = 50, Default = 30 },
     Callback = function(val) Config.MaxDepth = val end
@@ -415,22 +537,22 @@ DumpTab:Slider({
 DumpTab:Toggle({ Title = "Dump Attributes", Value = true, Callback = function(val) Config.DumpAttributes = val end })
 DumpTab:Toggle({ Title = "Scan Nil Instances in Memory", Value = true, Callback = function(val) Config.DumpNilInstances = val end })
 
-local ServiceSection = DumpTab:Section({ Title = "Select Services to Dump", Opened = true })
+local ServiceSection = DumpTab:Section({ Title = "Select Services to Dump (เลือกพื้นที่ดัมป์)", Opened = true })
 ServiceSection:Toggle({ Title = "Workspace", Value = true, Callback = function(val) Config.DumpWorkspace = val end })
 ServiceSection:Toggle({ Title = "ReplicatedStorage", Value = true, Callback = function(val) Config.DumpReplicated = val end })
 ServiceSection:Toggle({ Title = "StarterGui", Value = true, Callback = function(val) Config.DumpStarterGui = val end })
-ServiceSection:Toggle({ Title = "Players", Value = true, Callback = function(val) Config.DumpPlayers = val end })
-ServiceSection:Toggle({ Title = "Lighting", Value = true, Callback = function(val) Config.DumpLighting = val end })
-ServiceSection:Toggle({ Title = "ReplicatedFirst", Value = true, Callback = function(val) Config.DumpReplicatedFirst = val end })
+ServiceSection:Toggle({ Title = "Players", Value = false, Callback = function(val) Config.DumpPlayers = val end })
+ServiceSection:Toggle({ Title = "Lighting", Value = false, Callback = function(val) Config.DumpLighting = val end })
+ServiceSection:Toggle({ Title = "ReplicatedFirst", Value = false, Callback = function(val) Config.DumpReplicatedFirst = val end })
 
 DumpTab:Button({
-    Title = "🚀 DUMP FILE NOW (บันทึกลงไฟล์เต็ม)",
+    Title = "🚀 DUMP FILE NOW (บันทึกลงไฟล์ .txt)",
     Callback = function()
         local dumpLines = generateTreeDump()
         local parts = SaveSmartFile(Config.FileName, dumpLines)
         WindUI:Notify({ 
             Title = "Zentih HUB", 
-            Content = "บันทึกข้อมูลเต็มสำเร็จ! " .. (parts > 1 and ("แบ่งเป็น " .. parts .. " ไฟล์เนื่องจากขนาดใหญ่เกิน 8.5MB") or "จัดเก็บไฟล์เรียบร้อย"), 
+            Content = "บันทึกไฟล์สำเร็จ! " .. (parts > 1 and ("แยกเป็น " .. parts .. " ไฟล์เนื่องจากขนาดใหญ่เกิน 8.5MB") or "จัดเก็บไฟล์เรียบร้อย"), 
             Duration = 4 
         })
     end
@@ -444,7 +566,24 @@ SpyTab:Toggle({
     Value = false,
     Callback = function(val)
         Config.RemoteSpyEnabled = val
-        WindUI:Notify({ Title = "Remote Spy Status", Content = val and "เริ่มการดักอัดสัญญาณเชิงลึก..." or "ปิดการอัดสัญญาณแล้ว", Duration = 2 })
+        WindUI:Notify({
+            Title = "Remote Spy Status",
+            Content = val and "เริ่มการดักอัดสัญญาณ Remote เชิงลึก..." or "ปิดระบบ Remote Spy (ระบบกลับมาปกติแล้ว)",
+            Duration = 2
+        })
+    end
+})
+
+SpyTab:Toggle({
+    Title = "ใช้เเบบที่ 1: บล็อก Remote (Block Mode)",
+    Value = false,
+    Callback = function(val)
+        Config.BlockRemoteServer = val
+        WindUI:Notify({
+            Title = "Remote Spy Mode",
+            Content = val and "เปิดโหมดบล็อก Remote (ไม่ส่งไปหาเซิร์ฟเวอร์)" or "เปิดโหมดปกติ (ส่งไปหาเซิร์ฟเวอร์ปกติ)",
+            Duration = 2
+        })
     end
 })
 
@@ -455,6 +594,10 @@ SpyTab:Toggle({ Title = "Filter Animations / Ping", Value = true, Callback = fun
 SpyTab:Button({
     Title = "💾 Save Remote Logs to File (.txt)",
     Callback = function()
+        if #Config.CapturedRemotes == 0 then
+            WindUI:Notify({ Title = "Zentih HUB", Content = "ยังไม่มีประวัติ Remote ที่อัดไว้", Duration = 3 })
+            return
+        end
         local spyData = {
             "-- === ZENTIH HUB: CAPTURED REMOTE & UI LOGS == --",
             "-- Total Captured Calls: " .. tostring(Config.TotalCalls) .. "\n"
@@ -463,6 +606,18 @@ SpyTab:Button({
         
         local parts = SaveSmartFile("Zentih_RemoteSpy_" .. Config.FileName, spyData)
         WindUI:Notify({ Title = "Zentih HUB", Content = "บันทึก Logs สำเร็จ! (" .. parts .. " ไฟล์)", Duration = 4 })
+    end
+})
+
+SpyTab:Button({
+    Title = "🤖 Generate AI Prompt Format",
+    Callback = function()
+        local promptData = "นี่คือ Remote Events ที่จับสัญญาณเชิงลึกและแกะรอยมาได้จากเกม Roblox ช่วยเขียนสคริปต์ทำงานอัตโนมัติให้หน่อย:\n\n"
+        promptData = promptData .. table.concat(Config.CapturedRemotes, "\n")
+        if setclipboard then
+            setclipboard(promptData)
+            WindUI:Notify({ Title = "Zentih HUB", Content = "คัดลอก Prompt สำหรับ AI เรียบร้อยแล้ว!", Duration = 3 })
+        end
     end
 })
 
@@ -476,37 +631,237 @@ SpyTab:Button({
     end
 })
 
--- TAB 4: SETTINGS
+-- TAB 4: HIDDEN / NIL SCANNER
+local AdvTab = Window:Tab({ Title = "Hidden / Nil Scanner", Icon = "box" })
+
+AdvTab:Button({
+    Title = "📜 Quick Dump All Remotes in Game",
+    Callback = function()
+        local remotesText = {
+            "-- ZENTIH HUB: ALL REMOTES QUICK LIST --\n"
+        }
+        local count = 0
+        for _, obj in ipairs(game:GetDescendants()) do
+            if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") or obj:IsA("UnreliableRemoteEvent") then
+                count = count + 1
+                table.insert(remotesText, string.format("[%s] %s -> game.%s", obj.ClassName, obj.Name, obj:GetFullName()))
+            end
+        end
+        local parts = SaveSmartFile("Zentih_RemotesList_" .. tostring(game.PlaceId), remotesText)
+        WindUI:Notify({ Title = "Zentih HUB", Content = "พบ " .. count .. " Remotes! บันทึกไฟล์สำเร็จ", Duration = 4 })
+    end
+})
+
+AdvTab:Button({
+    Title = "🕵️ Scan Nil Instances (วัตถุซ่อนไร้ Parent)",
+    Callback = function()
+        local nilLines, count = scanNilInstances()
+        local parts = SaveSmartFile("Zentih_NilInstances_" .. tostring(game.PlaceId), nilLines)
+        WindUI:Notify({ Title = "Zentih HUB", Content = "พบ Nil Instances " .. count .. " ชิ้น! บันทึกแล้ว", Duration = 4 })
+    end
+})
+
+AdvTab:Button({
+    Title = "🧠 Scan Garbage Collector (GC Table Remotes)",
+    Callback = function()
+        local gcLines, count = scanGCRemotes()
+        local parts = SaveSmartFile("Zentih_GCRemotes_" .. tostring(game.PlaceId), gcLines)
+        WindUI:Notify({ Title = "Zentih HUB", Content = "พบ GC Remotes " .. count .. " ชิ้น! บันทึกแล้ว", Duration = 4 })
+    end
+})
+
+-- TAB 5: SETTINGS
 local SettingsTab = Window:Tab({ Title = "Settings", Icon = "settings" })
 
-SettingsTab:Dropdown({
+local VisualSection = SettingsTab:Section({ Title = "Visual Options", Opened = true })
+
+VisualSection:Dropdown({
     Title  = "UI Theme Color",
     Values = {"Dark", "Light", "Rose", "Red", "Aqua", "Green", "Nord", "Midnight"},
     Value  = "Dark",
-    Callback = function(SelectedTheme) pcall(function() WindUI:SetTheme(SelectedTheme) end) end,
+    Callback = function(SelectedTheme)
+        pcall(function() WindUI:SetTheme(SelectedTheme) end)
+    end,
+})
+
+VisualSection:Dropdown({
+    Title  = "GUI Size Preset",
+    Values = {"Small (520x380)", "Standard (580x490)", "Large (720x540)"},
+    Value  = "Standard (580x490)",
+    Callback = function(Option)
+        pcall(function()
+            if Option == "Small (520x380)" then
+                Window:SetSize(UDim2.fromOffset(520, 380))
+            elseif Option == "Standard (580x490)" then
+                Window:SetSize(UDim2.fromOffset(580, 490))
+            elseif Option == "Large (720x540)" then
+                Window:SetSize(UDim2.fromOffset(720, 540))
+            end
+        end)
+    end,
+})
+
+-- CONFIGURATION FILE MANAGER
+local FileSection = SettingsTab:Section({ Title = "Configuration File Manager", Opened = true })
+
+local function getFileList()
+    local list = {}
+    if listfiles and isfolder and isfolder(HubFolderName) then
+        for _, file in ipairs(listfiles(HubFolderName)) do
+            local name = file:match("([^/\\]+)$")
+            if name and name:match("%.json$") then
+                table.insert(list, name:gsub("%.json$", ""))
+            end
+        end
+    end
+    return #list > 0 and list or {"Default_Config"}
+end
+
+local inputFileName = ""
+local fileDropdownObj = nil
+
+FileSection:Input({
+    Title = "File Name",
+    Placeholder = "Enter configuration file name...",
+    Callback = function(text) inputFileName = text end
+})
+
+FileSection:Button({
+    Title = "Create File",
+    Callback = function()
+        if inputFileName ~= "" and writefile then
+            local fullPath = HubFolderName .. "/" .. inputFileName .. ".json"
+            if not isfile(fullPath) then
+                writefile(fullPath, HttpService:JSONEncode(Config))
+                Config.SelectedFile = inputFileName
+                if fileDropdownObj and fileDropdownObj.SetValues then
+                    fileDropdownObj:SetValues(getFileList())
+                    fileDropdownObj:Set(inputFileName)
+                end
+                WindUI:Notify({ Title = "File Manager", Content = "Created file: " .. inputFileName, Duration = 3 })
+            else
+                WindUI:Notify({ Title = "File Manager", Content = "File already exists!", Duration = 3 })
+            end
+        end
+    end
+})
+
+fileDropdownObj = FileSection:Dropdown({
+    Title = "Select Config File",
+    Values = getFileList(),
+    Value = getFileList()[1],
+    Callback = function(selected) Config.SelectedFile = selected end
+})
+
+FileSection:Button({
+    Title = "Save File",
+    Callback = function()
+        local targetFile = Config.SelectedFile ~= "" and Config.SelectedFile or inputFileName
+        if targetFile ~= "" and writefile then
+            local fullPath = HubFolderName .. "/" .. targetFile .. ".json"
+            writefile(fullPath, HttpService:JSONEncode(Config))
+            WindUI:Notify({ Title = "File Manager", Content = "Saved settings to " .. targetFile .. ".json", Duration = 3 })
+        end
+    end
+})
+
+FileSection:Toggle({
+    Title = "Auto Load File",
+    Value = false,
+    Callback = function(val)
+        if val and Config.SelectedFile ~= "" and writefile then
+            Config.AutoLoadFile = Config.SelectedFile
+            writefile(HubFolderName .. "/autoload.txt", Config.SelectedFile)
+            WindUI:Notify({ Title = "File Manager", Content = "Set " .. Config.SelectedFile .. " as Auto Load", Duration = 3 })
+        else
+            Config.AutoLoadFile = ""
+            if isfile and isfile(HubFolderName .. "/autoload.txt") and delfile then
+                delfile(HubFolderName .. "/autoload.txt")
+            end
+        end
+    end
+})
+
+FileSection:Button({
+    Title = "Delete Selected File",
+    Callback = function()
+        if Config.SelectedFile ~= "" and delfile then
+            local fullPath = HubFolderName .. "/" .. Config.SelectedFile .. ".json"
+            if isfile(fullPath) then
+                delfile(fullPath)
+                WindUI:Notify({ Title = "File Manager", Content = "Deleted file: " .. Config.SelectedFile, Duration = 3 })
+                Config.SelectedFile = ""
+                if fileDropdownObj and fileDropdownObj.SetValues then fileDropdownObj:SetValues(getFileList()) end
+            end
+        end
+    end
 })
 
 -- ==========================================================
--- 🔘 CLEAN CIRCULAR TOGGLE BUTTON
+-- 🔘 CLEAN CIRCULAR NO-BORDER TOGGLE BUTTON
 -- ==========================================================
 local function CreateCleanToggleBtn()
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "ZentihCleanToggleGui"
     ScreenGui.ResetOnSpawn = false
-    ScreenGui.Parent = gethui and gethui() or CoreGui
+    ScreenGui.IgnoreGuiInset = true
 
-    local Frame = Instance.new("Frame", ScreenGui)
+    if gethui then
+        ScreenGui.Parent = gethui()
+    elseif syn and syn.protect_gui then
+        syn.protect_gui(ScreenGui)
+        ScreenGui.Parent = CoreGui
+    else
+        local parentOk = pcall(function() ScreenGui.Parent = CoreGui end)
+        if not parentOk then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
+    end
+
+    local Frame = Instance.new("Frame")
+    Frame.Name = "CleanToggleButtonFrame"
     Frame.Size = UDim2.fromOffset(52, 52)
     Frame.Position = UDim2.new(0.02, 0, 0.25, 0)
     Frame.BackgroundTransparency = 1
+    Frame.BorderSizePixel = 0
+    Frame.Active = true
+    Frame.Parent = ScreenGui
 
-    local ImageBtn = Instance.new("ImageButton", Frame)
+    local ImageBtn = Instance.new("ImageButton")
+    ImageBtn.Name = "LogoBtn"
     ImageBtn.Size = UDim2.fromScale(1, 1)
+    ImageBtn.Position = UDim2.fromScale(0, 0)
     ImageBtn.BackgroundTransparency = 1
+    ImageBtn.BorderSizePixel = 0
     ImageBtn.Image = LogoAsset
+    ImageBtn.Parent = Frame
 
-    local BtnCorner = Instance.new("UICorner", ImageBtn)
+    local BtnCorner = Instance.new("UICorner")
     BtnCorner.CornerRadius = UDim.new(1, 0)
+    BtnCorner.Parent = ImageBtn
+
+    local dragging, dragInput, dragStart, startPos
+    local function update(input)
+        local delta = input.Position - dragStart
+        Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+
+    Frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = Frame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+
+    Frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then update(input) end
+    end)
 
     ImageBtn.MouseButton1Click:Connect(function()
         pcall(function() Window:Toggle() end)
@@ -516,7 +871,7 @@ end
 CreateCleanToggleBtn()
 pcall(function() Window:SelectTab(1) end)
 
-print("[Zentih HUB] Universal Full Deep Dumper Engine Loaded Successfully!")
+print("[Zentih HUB] Universal Dumper & Deep Spy Loaded Successfully!")
 
 end)
 
