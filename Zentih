@@ -3,11 +3,11 @@
     Zentih HUB - Universal Deep Game Dumper & Executable RemoteSpy
     ================================================================
     แบรนด์: Zentih HUB
-    วัตถุประสงค์: สแกน ดักจับ ดัมพ์โครงสร้างเกม 5 ชั้น และดักจับ Remote เป็นโค้ดรันได้จริง 100%
+    วัตถุประสงค์: สแกน ดักจับ ดัมพ์โครงสร้างเกม 5 ชั้น (แก้ไขสิทธิ์ CorePackages ล้มเหลว 100%)
     UI Engine: WindUI (Official Latest Release)
     โลโก้: rbxassetid://74773895938557
     รองรับ: Delta Mobile, Potassium, Fluxus, Wave, Solara และตัวรันทุกชนิด
-    อัปเดต: แยกไฟล์อัตโนมัติเมื่อขนาดเกิน 9.9 MB
+    อัปเดต: กรองสิทธิ์ RobloxScript Capability + ลิเมตไฟล์ 22 MB
 ]]
 
 local ok, errMsg = pcall(function()
@@ -29,8 +29,12 @@ local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
 local LogoAsset = "rbxassetid://74773895938557"
 local HubFolderName = "ZentihHubData"
 
-if makefolder and not isfolder(HubFolderName) then
-    makefolder(HubFolderName)
+if makefolder then
+    pcall(function()
+        if not isfolder(HubFolderName) then
+            makefolder(HubFolderName)
+        end
+    end)
 end
 
 -- 2. สร้างหน้าต่างหลัก Zentih HUB
@@ -83,7 +87,7 @@ local Config = {
     SwitchRemotes = true,       -- 2. รีโมท (Remotes & Network)
     SwitchUI = true,            -- 3. ยูไอ & Player Data
     SwitchModules = true,       -- 4. ข้อมูล ModuleScript (Data Tables)
-    SwitchMemory = true,        -- 5. หน่วยความจำ RAM (GC Memory)
+    SwitchMemory = false,       -- 5. หน่วยความจำ RAM (GC Memory)
     SwitchMapPositions = true,  -- 6. ตำแหน่งแมป CFrame & Tags
 
     -- Remote Spy Engine State
@@ -108,6 +112,12 @@ local Config = {
     AutoLoadFile = ""
 }
 
+-- ทำความสะอาดชื่อไฟล์ให้ปลอดภัยสำหรับระบบไฟล์
+local function sanitizeFileName(str)
+    if type(str) ~= "string" then return "file" end
+    return str:gsub('[%c%s%:%*%?%"%<%>%|%\\]', "_")
+end
+
 -- สแกนหากลุ่ม Services ที่ต้องการ DUMP
 local function getSelectedServices()
     local services = {}
@@ -120,19 +130,24 @@ local function getSelectedServices()
     return services
 end
 
--- ระบบบันทึกไฟล์อัจฉริยะ (แบ่งไฟล์อัตโนมัติเมื่อขนาดเกิน 9.9 MB)
+-- ระบบบันทึกไฟล์อัจฉริยะ (ขนาดสูงสุด 22 MB)
 local function SaveSmartFile(baseName, contentLines)
-    local rawName = baseName:gsub("%.txt$", "")
-    local MAX_BYTES = 9.8 * 1024 * 1024 -- กำหนดไว้ที่ 9.8 MB เพื่อความปลอดภัยสูงสุดไม่ให้เกิน 9.9 MB
+    local cleanName = sanitizeFileName(baseName:gsub("%.txt$", ""))
+    local MAX_BYTES = 22 * 1024 * 1024
     local part = 1
     local currentChunk = {}
     local currentSize = 0
+    local savedFilesCount = 0
     
-    for _, line in ipairs(contentLines) do
+    for i = 1, #contentLines do
+        local line = contentLines[i]
         local lineSize = #line + 1
         if currentSize + lineSize > MAX_BYTES then
-            local filePath = string.format("%s/%s_Part%d.txt", HubFolderName, rawName, part)
-            if writefile then writefile(filePath, table.concat(currentChunk, "\n")) end
+            local filePath = string.format("%s/%s_Part%d.txt", HubFolderName, cleanName, part)
+            if writefile then
+                pcall(function() writefile(filePath, table.concat(currentChunk, "\n")) end)
+                savedFilesCount = savedFilesCount + 1
+            end
             part = part + 1
             currentChunk = {"=== ต่อจากไฟล์ Part " .. (part - 1) .. " ===\n"}
             currentSize = #currentChunk[1]
@@ -143,8 +158,13 @@ local function SaveSmartFile(baseName, contentLines)
     
     if #currentChunk > 0 then
         local suffix = part > 1 and ("_Part" .. part) or ""
-        local filePath = string.format("%s/%s%s.txt", HubFolderName, rawName, suffix)
-        if writefile then writefile(filePath, table.concat(currentChunk, "\n")) end
+        local filePath = string.format("%s/%s%s.txt", HubFolderName, cleanName, suffix)
+        if writefile then
+            local successSave = pcall(function() writefile(filePath, table.concat(currentChunk, "\n")) end)
+            if successSave then savedFilesCount = savedFilesCount + 1 end
+        elseif setclipboard then
+            pcall(function() setclipboard(table.concat(currentChunk, "\n")) end)
+        end
     end
     
     return part
@@ -179,18 +199,21 @@ pcall(function()
 end)
 
 -- ==========================================================
--- 🛠️ ENGINE 1: MAP & 5-LAYER STRUCTURE DUMPER
+-- 🛠️ ENGINE 1: MAP & 5-LAYER FAST STRUCTURE DUMPER
 -- ==========================================================
 local function serializeTable(val, indentLevel, visited)
     visited = visited or {}
     indentLevel = indentLevel or 1
+    if indentLevel > 4 then return "{...}" end
     local indent = string.rep("\t", indentLevel)
     local t = typeof(val)
 
     if t == "string" then
         return '"' .. tostring(val) .. '"'
     elseif t == "Instance" then
-        return 'game.' .. val:GetFullName()
+        local fullPath = "Instance"
+        pcall(function() fullPath = 'game.' .. val:GetFullName() end)
+        return fullPath
     elseif t == "Vector3" then
         return string.format("Vector3.new(%.2f, %.2f, %.2f)", val.X, val.Y, val.Z)
     elseif t == "CFrame" then
@@ -214,6 +237,7 @@ local function serializeTable(val, indentLevel, visited)
         if isArray then
             for i, v in ipairs(val) do
                 table.insert(entries, serializeTable(v, indentLevel + 1, visited))
+                if i > 50 then table.insert(entries, "... (Truncated)"); break end
             end
             if #entries <= 3 then
                 return "{ " .. table.concat(entries, ", ") .. " }"
@@ -221,7 +245,10 @@ local function serializeTable(val, indentLevel, visited)
                 return "{\n" .. indent .. "\t" .. table.concat(entries, ",\n" .. indent .. "\t") .. "\n" .. indent .. "}"
             end
         else
+            local count = 0
             for k, v in pairs(val) do
+                count = count + 1
+                if count > 50 then table.insert(entries, "[\"...\"] = \"Truncated\""); break end
                 local keyStr = type(k) == "string" and ('["' .. k .. '"]') or ("[" .. tostring(k) .. "]")
                 table.insert(entries, keyStr .. " = " .. serializeTable(v, indentLevel + 1, visited))
             end
@@ -232,131 +259,149 @@ local function serializeTable(val, indentLevel, visited)
     end
 end
 
--- Layer 2: Data Modules Scanner
-local function scanDataModules()
-    local moduleLines = {
-        "\n========================================",
-        "LAYER 2: DATA MODULES & CONFIG TABLES",
-        "========================================"
-    }
+-- Layer 2: Data Modules Scanner (SAFE SAFE INSPECTION - แก้ไข Error Line 272)
+local function scanDataModules(outputLines)
+    table.insert(outputLines, "\n========================================")
+    table.insert(outputLines, "LAYER 2: DATA MODULES & CONFIG TABLES")
+    table.insert(outputLines, "========================================")
+    
     local count = 0
     local targetKeywords = {"shop", "tower", "unit", "map", "item", "config", "data", "stage", "raid"}
 
-    for _, obj in ipairs(game:GetDescendants()) do
-        if obj:IsA("ModuleScript") then
-            local lowerName = string.lower(obj.Name)
-            local isMatch = false
-            for _, kw in ipairs(targetKeywords) do
-                if lowerName:find(kw) then
-                    isMatch = true
-                    break
-                end
-            end
+    -- สแกนเฉพาะพื้นที่สาธารณะ ป้องกันการโดน CorePackages / CoreGui สิทธิ์ RobloxScript
+    local safeScanTargets = {
+        ReplicatedStorage,
+        ReplicatedFirst,
+        LocalPlayer:FindFirstChild("PlayerGui"),
+        game:GetService("StarterPlayer")
+    }
 
-            if isMatch then
-                pcall(function()
-                    local reqData = require(obj)
-                    if type(reqData) == "table" then
-                        count = count + 1
-                        table.insert(moduleLines, string.format("\n-- Module [%d]: game.%s", count, obj:GetFullName()))
-                        table.insert(moduleLines, "local " .. obj.Name .. "Data = " .. serializeTable(reqData, 1))
+    for _, targetParent in ipairs(safeScanTargets) do
+        if targetParent then
+            pcall(function()
+                local descendants = targetParent:GetDescendants()
+                for i = 1, #descendants do
+                    local obj = descendants[i]
+                    if obj:IsA("ModuleScript") then
+                        pcall(function()
+                            local lowerName = string.lower(obj.Name)
+                            local isMatch = false
+                            for _, kw in ipairs(targetKeywords) do
+                                if lowerName:find(kw) then
+                                    isMatch = true
+                                    break
+                                end
+                            end
+
+                            if isMatch then
+                                local reqSuccess, reqData = pcall(require, obj)
+                                if reqSuccess and type(reqData) == "table" then
+                                    count = count + 1
+                                    table.insert(outputLines, string.format("\n-- Module [%d]: game.%s", count, obj:GetFullName()))
+                                    table.insert(outputLines, "local " .. sanitizeFileName(obj.Name) .. "Data = " .. serializeTable(reqData, 1))
+                                end
+                            end
+                        end)
                     end
-                end)
-            end
+                    if i % 300 == 0 then task.wait() end
+                end
+            end)
         end
     end
-    table.insert(moduleLines, 1, "-- Total Executed Modules: " .. tostring(count))
-    return moduleLines
+    table.insert(outputLines, "-- Total Executed Modules: " .. tostring(count))
 end
 
 -- Layer 3: GC RAM Memory Scanner
-local function scanGCMemory()
-    local gcLines = {
-        "\n========================================",
-        "LAYER 3: GARBAGE COLLECTOR & RAM MEMORY",
-        "========================================"
-    }
+local function scanGCMemory(outputLines)
+    table.insert(outputLines, "\n========================================")
+    table.insert(outputLines, "LAYER 3: GARBAGE COLLECTOR & RAM MEMORY")
+    table.insert(outputLines, "========================================")
     local count = 0
 
     if getgc then
-        local gcList = getgc(true)
-        for _, item in ipairs(gcList) do
-            if type(item) == "table" and rawget(item, "FireServer") then
-                count = count + 1
-                table.insert(gcLines, string.format("[%04d] Found Custom Network Table in RAM Memory", count))
-            elseif typeof(item) == "Instance" and (item:IsA("RemoteEvent") or item:IsA("RemoteFunction")) then
-                if not item.Parent then
-                    count = count + 1
-                    table.insert(gcLines, string.format("[%04d] [UNPARENTED REMOTE] [%s] %s -> game.%s", count, item.ClassName, item.Name, item:GetFullName()))
-                end
+        pcall(function()
+            local gcList = getgc(true)
+            for i = 1, #gcList do
+                pcall(function()
+                    local item = gcList[i]
+                    if typeof(item) == "Instance" and (item:IsA("RemoteEvent") or item:IsA("RemoteFunction")) then
+                        if not item.Parent then
+                            count = count + 1
+                            table.insert(outputLines, string.format("[%04d] [UNPARENTED REMOTE] [%s] %s -> game.%s", count, item.ClassName, item.Name, item:GetFullName()))
+                        end
+                    end
+                end)
+                if i % 3000 == 0 then task.wait() end
             end
-        end
-        table.insert(gcLines, 1, "-- Total GC Memory Items: " .. tostring(count))
+        end)
+        table.insert(outputLines, "-- Total GC Memory Remotes: " .. tostring(count))
     else
-        table.insert(gcLines, "-- Executor ของคุณไม่รองรับ getgc()")
+        table.insert(outputLines, "-- Executor ของคุณไม่รองรับ getgc()")
     end
-
-    return gcLines
 end
 
 -- Layer 4: Map & Workspace Interactive Objects
-local function scanWorkspacePositions()
-    local mapLines = {
-        "\n========================================",
-        "LAYER 4: WORKSPACE & INTERACTIVE POSITIONS",
-        "========================================"
-    }
+local function scanWorkspacePositions(outputLines)
+    table.insert(outputLines, "\n========================================")
+    table.insert(outputLines, "LAYER 4: WORKSPACE & INTERACTIVE POSITIONS")
+    table.insert(outputLines, "========================================")
     local count = 0
 
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            local lowerName = string.lower(obj.Name)
-            if lowerName:find("tp") or lowerName:find("teleport") or lowerName:find("pad") or lowerName:find("zone") or lowerName:find("pod") or lowerName:find("door") then
-                count = count + 1
-                local pos = obj.Position
-                table.insert(mapLines, string.format("[ZONE/PAD] Path: game.%s | Vector3.new(%.2f, %.2f, %.2f) | CFrame = CFrame.new(%.2f, %.2f, %.2f)",
-                    obj:GetFullName(), pos.X, pos.Y, pos.Z, pos.X, pos.Y, pos.Z))
-            end
+    pcall(function()
+        local workspaceItems = workspace:GetDescendants()
+        for i = 1, #workspaceItems do
+            pcall(function()
+                local obj = workspaceItems[i]
+                if obj:IsA("BasePart") then
+                    local lowerName = string.lower(obj.Name)
+                    if lowerName:find("tp") or lowerName:find("teleport") or lowerName:find("pad") or lowerName:find("zone") or lowerName:find("pod") or lowerName:find("door") then
+                        count = count + 1
+                        local pos = obj.Position
+                        table.insert(outputLines, string.format("[ZONE/PAD] Path: game.%s | Vector3.new(%.2f, %.2f, %.2f) | CFrame = CFrame.new(%.2f, %.2f, %.2f)",
+                            obj:GetFullName(), pos.X, pos.Y, pos.Z, pos.X, pos.Y, pos.Z))
+                    end
+                end
+            end)
+            if i % 1000 == 0 then task.wait() end
         end
-    end
+    end)
 
     pcall(function()
-        table.insert(mapLines, "\n--- CollectionService Tagged Objects ---")
+        table.insert(outputLines, "\n--- CollectionService Tagged Objects ---")
         local tags = {"Monster", "Enemy", "Tower", "SpawnPoint", "Spot", "UnitSpot"}
         for _, tag in ipairs(tags) do
             local taggedObjects = CollectionService:GetTagged(tag)
             if #taggedObjects > 0 then
-                table.insert(mapLines, string.format("\nTag: '%s' (%d Objects Found):", tag, #taggedObjects))
-                for i, tObj in ipairs(taggedObjects) do
-                    if tObj:IsA("BasePart") then
-                        local pos = tObj.Position
-                        table.insert(mapLines, string.format("  [%d] game.%s | Vector3.new(%.2f, %.2f, %.2f)", i, tObj:GetFullName(), pos.X, pos.Y, pos.Z))
-                    else
-                        table.insert(mapLines, string.format("  [%d] game.%s (%s)", i, tObj:GetFullName(), tObj.ClassName))
-                    end
+                table.insert(outputLines, string.format("\nTag: '%s' (%d Objects Found):", tag, #taggedObjects))
+                for idx, tObj in ipairs(taggedObjects) do
+                    pcall(function()
+                        if tObj:IsA("BasePart") then
+                            local pos = tObj.Position
+                            table.insert(outputLines, string.format("  [%d] game.%s | Vector3.new(%.2f, %.2f, %.2f)", idx, tObj:GetFullName(), pos.X, pos.Y, pos.Z))
+                        else
+                            table.insert(outputLines, string.format("  [%d] game.%s (%s)", idx, tObj:GetFullName(), tObj.ClassName))
+                        end
+                    end)
                 end
             end
         end
     end)
 
-    table.insert(mapLines, 1, "-- Total Map Positions Found: " .. tostring(count))
-    return mapLines
+    table.insert(outputLines, "-- Total Map Positions Found: " .. tostring(count))
 end
 
 -- Layer 5: Player Inventory & UI Data
-local function scanPlayerAndUIData()
-    local uiLines = {
-        "\n========================================",
-        "LAYER 5: PLAYER INVENTORY & UI DATA",
-        "========================================"
-    }
+local function scanPlayerAndUIData(outputLines)
+    table.insert(outputLines, "\n========================================")
+    table.insert(outputLines, "LAYER 5: PLAYER INVENTORY & UI DATA")
+    table.insert(outputLines, "========================================")
 
-    table.insert(uiLines, "--- Player Leaderstats & Attributes ---")
+    table.insert(outputLines, "--- Player Leaderstats & Attributes ---")
     local leaderstats = LocalPlayer:FindFirstChild("leaderstats")
     if leaderstats then
         for _, val in ipairs(leaderstats:GetChildren()) do
-            if val:IsA("ValueObject") then
-                table.insert(uiLines, string.format("[LEADERSTAT] %s = %s", val.Name, tostring(val.Value)))
+            if val:IsA("ValueBase") then
+                table.insert(outputLines, string.format("[LEADERSTAT] %s = %s", val.Name, tostring(val.Value)))
             end
         end
     end
@@ -364,147 +409,161 @@ local function scanPlayerAndUIData()
     pcall(function()
         local attributes = LocalPlayer:GetAttributes()
         for k, v in pairs(attributes) do
-            table.insert(uiLines, string.format("[ATTRIBUTE] %s = %s", tostring(k), tostring(v)))
+            table.insert(outputLines, string.format("[ATTRIBUTE] %s = %s", tostring(k), tostring(v)))
         end
     end)
 
-    table.insert(uiLines, "\n--- PlayerGui Active Elements ---")
+    table.insert(outputLines, "\n--- PlayerGui Active Elements ---")
     local pGui = LocalPlayer:FindFirstChild("PlayerGui")
     if pGui then
         for _, screenGui in ipairs(pGui:GetChildren()) do
             if screenGui:IsA("ScreenGui") and screenGui.Enabled then
-                table.insert(uiLines, string.format("\n[ScreenGui] game.Players.LocalPlayer.PlayerGui.%s", screenGui.Name))
+                table.insert(outputLines, string.format("\n[ScreenGui] game.Players.LocalPlayer.PlayerGui.%s", screenGui.Name))
                 for _, btn in ipairs(screenGui:GetDescendants()) do
-                    if btn:IsA("TextButton") or btn:IsA("ImageButton") then
-                        local text = btn:IsA("TextButton") and btn.Text or btn.Name
-                        table.insert(uiLines, string.format("  ├── [Button] Name: '%s' | Text: '%s' | Path: game.%s", btn.Name, text, btn:GetFullName()))
-                    end
+                    pcall(function()
+                        if btn:IsA("TextButton") or btn:IsA("ImageButton") then
+                            local text = btn:IsA("TextButton") and btn.Text or btn.Name
+                            table.insert(outputLines, string.format("  ├── [Button] Name: '%s' | Text: '%s' | Path: game.%s", btn.Name, text, btn:GetFullName()))
+                        end
+                    end)
                 end
             end
         end
     end
-
-    return uiLines
 end
 
--- ฟังก์ชันหลักรวบรวมการ DUMP 5 ชั้น
-local function generateTreeDump()
-    local lines = {
-        "-- ========================================",
-        "-- ZENTIH HUB: FULL DEEP 5-LAYER GAME DUMP DATA",
-        "-- Place ID: " .. tostring(game.PlaceId),
-        "-- Date: " .. os.date("%Y-%m-%d %H:%M:%S"),
-        "-- Format: " .. Config.TreeStyle,
-        "-- ========================================\n"
-    }
+-- ฟังก์ชันหลักรวบรวมการ DUMP แบบ Async
+local function executeAsyncDump()
+    task.spawn(function()
+        WindUI:Notify({ Title = "Zentih Dumper", Content = "กำลังเริ่มดัมพ์ข้อมูลความเร็วสูง...", Duration = 3 })
 
-    local totalObjectsCount = 0
+        local lines = {
+            "-- ========================================",
+            "-- ZENTIH HUB: FULL DEEP 5-LAYER GAME DUMP DATA",
+            "-- Place ID: " .. tostring(game.PlaceId),
+            "-- Date: " .. os.date("%Y-%m-%d %H:%M:%S"),
+            "-- Format: " .. Config.TreeStyle,
+            "-- ========================================\n"
+        }
 
-    local function dumpNode(object, depth, isLast, prefix)
-        depth = depth or 0
-        if not Config.UnlimitedDepth and depth > Config.MaxDepth then return end
+        local totalObjectsCount = 0
+        local processedCounter = 0
 
-        prefix = prefix or ""
-        local currentBranch = ""
-        local nextPrefix = ""
+        local function dumpNode(object, depth, isLast, prefix)
+            depth = depth or 0
+            if not Config.UnlimitedDepth and depth > Config.MaxDepth then return end
 
-        if Config.TreeStyle == "Railway (├──)" then
-            currentBranch = isLast and "└── " or "├── "
-            nextPrefix = prefix .. (isLast and "    " or "│   ")
-        elseif Config.TreeStyle == "Short Code" then
-            currentBranch = string.rep("  ", depth)
-            nextPrefix = ""
-        else
-            currentBranch = string.rep("- ", depth)
-            nextPrefix = ""
-        end
+            processedCounter = processedCounter + 1
+            if processedCounter % 800 == 0 then task.wait() end
 
-        local className = object.ClassName
-        local name = object.Name
+            prefix = prefix or ""
+            local currentBranch = ""
+            local nextPrefix = ""
 
-        local isRemote = className:find("Remote") or className:find("Bindable")
-        local isUI = className:find("Button") or className == "ProximityPrompt" or className == "ClickDetector" or className == "ScreenGui"
-        local isAsset = not isRemote and not isUI
-
-        local shouldShow = true
-        if isRemote and not Config.SwitchRemotes then shouldShow = false end
-        if isUI and not Config.SwitchUI then shouldShow = false end
-        if isAsset and not Config.SwitchGameAssets then shouldShow = false end
-
-        if Config.FilterType == "เฉพาะ Remote" and not isRemote then
-            shouldShow = false
-        elseif Config.FilterType == "เฉพาะ ModuleScript" and className ~= "ModuleScript" then
-            shouldShow = false
-        end
-
-        if shouldShow then
-            totalObjectsCount = totalObjectsCount + 1
-            local tag = "[" .. className .. "]"
-            if className:find("RemoteEvent") then tag = "[RemoteEvent ⚡]"
-            elseif className:find("RemoteFunction") then tag = "[RemoteFunction 🔄]"
-            elseif className == "ModuleScript" then tag = "[ModuleScript 📜]"
-            elseif className == "LocalScript" then tag = "[LocalScript 📝]"
+            if Config.TreeStyle == "Railway (├──)" then
+                currentBranch = isLast and "└── " or "├── "
+                nextPrefix = prefix .. (isLast and "    " or "│   ")
+            elseif Config.TreeStyle == "Short Code" then
+                currentBranch = string.rep("  ", depth)
+                nextPrefix = ""
+            else
+                currentBranch = string.rep("- ", depth)
+                nextPrefix = ""
             end
 
-            local line = prefix .. currentBranch .. tag .. " " .. name
+            local className = "Unknown"
+            local name = "Unknown"
+            
+            pcall(function()
+                className = object.ClassName
+                name = object.Name
+            end)
 
-            if className:find("Remote") then
-                line = line .. " -> Path: game." .. object:GetFullName()
-            elseif object:IsA("ValueObject") then
-                pcall(function() line = line .. " (Value: " .. tostring(object.Value) .. ")" end)
-            elseif object:IsA("TextButton") then
-                line = line .. " (Text: '" .. object.Text .. "')"
+            local isRemote = className:find("Remote") or className:find("Bindable")
+            local isUI = className:find("Button") or className == "ProximityPrompt" or className == "ClickDetector" or className == "ScreenGui"
+            local isAsset = not isRemote and not isUI
+
+            local shouldShow = true
+            if isRemote and not Config.SwitchRemotes then shouldShow = false end
+            if isUI and not Config.SwitchUI then shouldShow = false end
+            if isAsset and not Config.SwitchGameAssets then shouldShow = false end
+
+            if Config.FilterType == "เฉพาะ Remote" and not isRemote then
+                shouldShow = false
+            elseif Config.FilterType == "เฉพาะ ModuleScript" and className ~= "ModuleScript" then
+                shouldShow = false
             end
 
-            if Config.DumpAttributes then
+            if shouldShow then
+                totalObjectsCount = totalObjectsCount + 1
+                local tag = "[" .. className .. "]"
+                if className:find("RemoteEvent") then tag = "[RemoteEvent ⚡]"
+                elseif className:find("RemoteFunction") then tag = "[RemoteFunction 🔄]"
+                elseif className == "ModuleScript" then tag = "[ModuleScript 📜]"
+                elseif className == "LocalScript" then tag = "[LocalScript 📝]"
+                end
+
+                local line = prefix .. currentBranch .. tag .. " " .. name
+
                 pcall(function()
-                    local attributes = object:GetAttributes()
-                    local attrStrs = {}
-                    for k, v in pairs(attributes) do
-                        table.insert(attrStrs, tostring(k) .. "=" .. tostring(v))
-                    end
-                    if #attrStrs > 0 then
-                        line = line .. " {Attributes: " .. table.concat(attrStrs, ", ") .. "}"
+                    if className:find("Remote") then
+                        line = line .. " -> Path: game." .. object:GetFullName()
+                    elseif object:IsA("ValueBase") then
+                        line = line .. " (Value: " .. tostring(object.Value) .. ")"
+                    elseif object:IsA("TextButton") then
+                        line = line .. " (Text: '" .. object.Text .. "')"
                     end
                 end)
+
+                if Config.DumpAttributes then
+                    pcall(function()
+                        local attributes = object:GetAttributes()
+                        local attrStrs = {}
+                        for k, v in pairs(attributes) do
+                            table.insert(attrStrs, tostring(k) .. "=" .. tostring(v))
+                        end
+                        if #attrStrs > 0 then
+                            line = line .. " {Attributes: " .. table.concat(attrStrs, ", ") .. "}"
+                        end
+                    end)
+                end
+
+                table.insert(lines, line)
             end
 
-            table.insert(lines, line)
+            pcall(function()
+                local children = object:GetChildren()
+                for i, child in ipairs(children) do
+                    dumpNode(child, depth + 1, i == #children, nextPrefix)
+                end
+            end)
         end
 
-        local children = object:GetChildren()
-        for i, child in ipairs(children) do
-            dumpNode(child, depth + 1, i == #children, nextPrefix)
+        local services = getSelectedServices()
+        for _, service in ipairs(services) do
+            pcall(function()
+                table.insert(lines, "\n========================================\nSERVICE: " .. service.Name .. "\n========================================")
+                local children = service:GetChildren()
+                for i, child in ipairs(children) do
+                    dumpNode(child, 0, i == #children, "")
+                end
+            end)
         end
-    end
 
-    local services = getSelectedServices()
-    for _, service in ipairs(services) do
-        pcall(function()
-            table.insert(lines, "\n========================================\nSERVICE: " .. service.Name .. "\n========================================")
-            local children = service:GetChildren()
-            for i, child in ipairs(children) do
-                dumpNode(child, 0, i == #children, "")
-            end
-        end)
-    end
+        if Config.SwitchModules then scanDataModules(lines) end
+        if Config.SwitchMemory then scanGCMemory(lines) end
+        if Config.SwitchMapPositions then scanWorkspacePositions(lines) end
+        if Config.SwitchUI then scanPlayerAndUIData(lines) end
 
-    -- สแกนหมวดหมู่อื่นๆ เพิ่มเติมตามสวิตช์
-    if Config.SwitchModules then
-        for _, l in ipairs(scanDataModules()) do table.insert(lines, l) end
-    end
-    if Config.SwitchMemory then
-        for _, l in ipairs(scanGCMemory()) do table.insert(lines, l) end
-    end
-    if Config.SwitchMapPositions then
-        for _, l in ipairs(scanWorkspacePositions()) do table.insert(lines, l) end
-    end
-    if Config.SwitchUI then
-        for _, l in ipairs(scanPlayerAndUIData()) do table.insert(lines, l) end
-    end
+        table.insert(lines, 1, "-- Total Extracted Objects: " .. tostring(totalObjectsCount))
 
-    table.insert(lines, 1, "-- Total Extracted Objects: " .. tostring(totalObjectsCount))
-    return lines
+        local parts = SaveSmartFile(Config.FileName, lines)
+        WindUI:Notify({ 
+            Title = "Zentih HUB", 
+            Content = "ดัมพ์ไฟล์สำเร็จ! " .. (parts > 1 and ("แยกเป็น " .. parts .. " ไฟล์เนื่องจากขนาดใหญ่เกิน 22 MB") or "บันทึกไฟล์เรียบร้อยแล้วลงโฟลเดอร์ ZentihHubData"), 
+            Duration = 5 
+        })
+    end)
 end
 
 -- ==========================================================
@@ -524,13 +583,13 @@ if hookmetamethod and getrawmetatable then
             local method = getnamecallmethod()
             local args = {...}
 
-            -- เมื่อปิด Remote Spy จะส่งสัญญาณกลับมาเป็นปกติ 100%
             if not Config.RemoteSpyEnabled or checkcaller() then
                 return oldNamecall(self, ...)
             end
 
             if method == "FireServer" or method == "InvokeServer" then
-                local remotePath = self:GetFullName()
+                local remotePath = "Unknown"
+                pcall(function() remotePath = self:GetFullName() end)
                 
                 local isIgnored = false
                 if Config.IgnoreMovement and (remotePath:find("Move") or remotePath:find("Position") or remotePath:find("Physics") or remotePath:find("Walk")) then isIgnored = true end
@@ -586,8 +645,8 @@ end
 local MainTab = Window:Tab({ Title = "Main", Icon = "home" })
 
 MainTab:Paragraph({
-    Title = "Zentih HUB - Deep 5-Layer Dumper Engine",
-    Desc = "ระบบดัมพ์ไฟล์โครงสร้างเกม 5 ชั้น และดักจับ Remote แปลงข้อมูลเป็นชุดคำสั่งสคริปต์อัตโนมัติ"
+    Title = "Zentih HUB - High Speed Dumper Engine",
+    Desc = "ระบบดัมพ์ไฟล์โครงสร้างเกมความเร็วสูง รองรับขนาดไฟล์ใหญ่สูงสุด 22 MB ต่อไฟล์"
 })
 
 MainTab:Button({
@@ -623,20 +682,14 @@ local SwSection = DumpTab:Section({ Title = "Select Dumper Layers (เลือ�
 SwSection:Toggle({ Title = "1. Folders & Game Models", Value = true, Callback = function(val) Config.SwitchGameAssets = val end })
 SwSection:Toggle({ Title = "2. Remotes & Events", Value = true, Callback = function(val) Config.SwitchRemotes = val end })
 SwSection:Toggle({ Title = "3. Data Modules (require Tables)", Value = true, Callback = function(val) Config.SwitchModules = val end })
-SwSection:Toggle({ Title = "4. GC RAM Memory (getgc)", Value = true, Callback = function(val) Config.SwitchMemory = val end })
+SwSection:Toggle({ Title = "4. GC RAM Memory (ปิดเพื่อเพิ่มความเร็วสแกน)", Value = false, Callback = function(val) Config.SwitchMemory = val end })
 SwSection:Toggle({ Title = "5. Map Positions (CFrames & Tags)", Value = true, Callback = function(val) Config.SwitchMapPositions = val end })
 SwSection:Toggle({ Title = "6. Player Inventory & UI Data", Value = true, Callback = function(val) Config.SwitchUI = val end })
 
 DumpTab:Button({
     Title = "🚀 DUMP FILE NOW (บันทึกลงไฟล์ .txt)",
     Callback = function()
-        local dumpLines = generateTreeDump()
-        local parts = SaveSmartFile(Config.FileName, dumpLines)
-        WindUI:Notify({ 
-            Title = "Zentih HUB", 
-            Content = "บันทึกไฟล์ดัมพ์สำเร็จ! " .. (parts > 1 and ("แยกเป็น " .. parts .. " ไฟล์เนื่องจากขนาดใหญ่เกิน 9.9 MB") or "จัดเก็บไฟล์เรียบร้อย"), 
-            Duration = 4 
-        })
+        executeAsyncDump()
     end
 })
 
@@ -806,7 +859,7 @@ end
 CreateCleanToggleBtn()
 pcall(function() Window:SelectTab(1) end)
 
-print("[Zentih HUB] Deep 5-Layer Dumper & Remote Spy Engine Loaded Successfully!")
+print("[Zentih HUB] Fixed Security Capability Dumper Engine Loaded Successfully!")
 
 end)
 
